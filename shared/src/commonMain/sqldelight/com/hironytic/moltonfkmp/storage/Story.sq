@@ -1,0 +1,16 @@
+CREATE TABLE storyRecord (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  json TEXT NOT NULL
+);
+
+insertStory:
+INSERT INTO storyRecord(json) VALUES (?);
+
+lastInsertRowId:
+SELECT last_insert_rowid();
+
+selectStoryById:
+SELECT * FROM storyRecord WHERE id = ?;
+
+deleteStoryById:
+DELETE FROM storyRecord WHERE id = ?;
