@@ -1,11 +1,11 @@
 package com.hironytic.moltonfkmp
 
 import androidx.compose.ui.window.ComposeUIViewController
-import com.hironytic.moltonfkmp.storage.DatabaseDriverFactory
-import com.hironytic.moltonfkmp.storage.WorkspaceStore
-import com.hironytic.moltonfkmp.storage.createMoltonfDatabase
+import com.hironytic.moltonfkmp.di.initKoin
 
-private val workspaceStore: WorkspaceStore =
-    WorkspaceStore(createMoltonfDatabase(DatabaseDriverFactory().createDriver()))
+private val koinStarted: Unit = initKoin()
 
-fun MainViewController() = ComposeUIViewController { App() }
+fun MainViewController() = ComposeUIViewController {
+    koinStarted
+    App()
+}
