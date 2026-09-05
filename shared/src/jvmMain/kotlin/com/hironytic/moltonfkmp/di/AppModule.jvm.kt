@@ -8,7 +8,11 @@ import org.koin.dsl.module
 internal actual val platformModule: Module = module {
     single {
         val databaseFile = File(File(System.getProperty("user.home"), ".moltonf"), "moltonf.db")
+        val isNewDatabase = !databaseFile.exists()
         databaseFile.parentFile.mkdirs()
-        DatabaseDriverFactory("jdbc:sqlite:${databaseFile.absolutePath}")
+        DatabaseDriverFactory(
+            jdbcUrl = "jdbc:sqlite:${databaseFile.absolutePath}",
+            isNewDatabase = isNewDatabase,
+        )
     }
 }
