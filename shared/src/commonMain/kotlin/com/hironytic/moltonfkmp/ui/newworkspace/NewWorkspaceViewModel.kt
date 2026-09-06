@@ -12,8 +12,12 @@ import com.hironytic.moltonfkmp.story.createCharacterMap
 import kotlin.random.Random
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 enum class NewWorkspaceStep {
@@ -67,6 +71,22 @@ class NewWorkspaceViewModel(
 
     private val _name = MutableStateFlow("")
     val name: StateFlow<String> = _name.asStateFlow()
+
+    val canForwardFromSelectTeamStep: StateFlow<Boolean> =
+        combine(_team, _teamOptions) { team, options -> team != null && team in options }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    val canForwardFromSelectRoleOfVillagerStep: StateFlow<Boolean> =
+        combine(_villagerRole, _villagerRoleOptions) { role, options -> role != null && role in options }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    val canForwardFromSelectRoleOfWolfStep: StateFlow<Boolean> =
+        combine(_wolfRole, _wolfRoleOptions) { role, options -> role != null && role in options }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    val canForwardFromInputNameStep: StateFlow<Boolean> =
+        _name.map { it.isNotEmpty() }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     private val _registering = MutableStateFlow(false)
     val registering: StateFlow<Boolean> = _registering.asStateFlow()
@@ -127,10 +147,15 @@ class NewWorkspaceViewModel(
 
     fun selectTeam(option: TeamOption) {
         _team.value = option
-        when (option) {
+        forwardFromSelectTeamStep()
+    }
+
+    fun forwardFromSelectTeamStep() {
+        when (_team.value) {
             TeamOption.VILLAGER -> _step.value = NewWorkspaceStep.SELECT_ROLE_OF_VILLAGER
             TeamOption.WOLF -> _step.value = NewWorkspaceStep.SELECT_ROLE_OF_WOLF
             TeamOption.ANYTHING, TeamOption.HAMSTER -> moveToInputNameStep()
+            null -> {}
         }
     }
 
@@ -140,6 +165,10 @@ class NewWorkspaceViewModel(
 
     fun selectVillagerRole(option: VillagerRoleOption) {
         _villagerRole.value = option
+        forwardFromSelectRoleOfVillagerStep()
+    }
+
+    fun forwardFromSelectRoleOfVillagerStep() {
         moveToInputNameStep()
     }
 
@@ -149,12 +178,16 @@ class NewWorkspaceViewModel(
 
     fun selectWolfRole(option: WolfRoleOption) {
         _wolfRole.value = option
+        forwardFromSelectRoleOfWolfStep()
+    }
+
+    fun forwardFromSelectRoleOfWolfStep() {
         moveToInputNameStep()
     }
 
     private fun moveToInputNameStep() {
         val role = roleNameOf(_team.value, _villagerRole.value, _wolfRole.value)
-        _name.value = (story?.villageFullName ?: "") + if (role.isNotEmpty()) "($role)" else ""
+        _name.value = (story?.villageFullName ?: "") + if (role.isNotEmpty()) "（$role）" else ""
         _step.value = NewWorkspaceStep.INPUT_NAME
     }
 
@@ -195,9 +228,7 @@ class NewWorkspaceViewModel(
     }
 
     fun forwardFromInputNameStep() {
-        if (_name.value.isNotEmpty()) {
-            _step.value = NewWorkspaceStep.CONFIRM
-        }
+        _step.value = NewWorkspaceStep.CONFIRM
     }
 
     fun backFromConfirmStep() {
