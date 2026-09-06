@@ -45,54 +45,13 @@ class NewWorkspaceViewModel(
     private val _step = MutableStateFlow(NewWorkspaceStep.SELECT_STORY)
     val step: StateFlow<NewWorkspaceStep> = _step.asStateFlow()
 
+    //region Select Story
+
     private val _storyName = MutableStateFlow<String?>(null)
     val storyName: StateFlow<String?> = _storyName.asStateFlow()
 
     private val _archiveLoadError = MutableStateFlow(false)
     val archiveLoadError: StateFlow<Boolean> = _archiveLoadError.asStateFlow()
-
-    private val _teamOptions = MutableStateFlow<List<TeamOption>>(emptyList())
-    val teamOptions: StateFlow<List<TeamOption>> = _teamOptions.asStateFlow()
-
-    private val _villagerRoleOptions = MutableStateFlow<List<VillagerRoleOption>>(emptyList())
-    val villagerRoleOptions: StateFlow<List<VillagerRoleOption>> = _villagerRoleOptions.asStateFlow()
-
-    private val _wolfRoleOptions = MutableStateFlow<List<WolfRoleOption>>(emptyList())
-    val wolfRoleOptions: StateFlow<List<WolfRoleOption>> = _wolfRoleOptions.asStateFlow()
-
-    private val _team = MutableStateFlow<TeamOption?>(null)
-    val team: StateFlow<TeamOption?> = _team.asStateFlow()
-
-    private val _villagerRole = MutableStateFlow<VillagerRoleOption?>(null)
-    val villagerRole: StateFlow<VillagerRoleOption?> = _villagerRole.asStateFlow()
-
-    private val _wolfRole = MutableStateFlow<WolfRoleOption?>(null)
-    val wolfRole: StateFlow<WolfRoleOption?> = _wolfRole.asStateFlow()
-
-    private val _name = MutableStateFlow("")
-    val name: StateFlow<String> = _name.asStateFlow()
-
-    val canForwardFromSelectTeamStep: StateFlow<Boolean> =
-        combine(_team, _teamOptions) { team, options -> team != null && team in options }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
-
-    val canForwardFromSelectRoleOfVillagerStep: StateFlow<Boolean> =
-        combine(_villagerRole, _villagerRoleOptions) { role, options -> role != null && role in options }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
-
-    val canForwardFromSelectRoleOfWolfStep: StateFlow<Boolean> =
-        combine(_wolfRole, _wolfRoleOptions) { role, options -> role != null && role in options }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
-
-    val canForwardFromInputNameStep: StateFlow<Boolean> =
-        _name.map { it.isNotEmpty() }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
-
-    private val _registering = MutableStateFlow(false)
-    val registering: StateFlow<Boolean> = _registering.asStateFlow()
-
-    private val _registeredWorkspaceId = MutableStateFlow<String?>(null)
-    val registeredWorkspaceId: StateFlow<String?> = _registeredWorkspaceId.asStateFlow()
 
     fun onArchiveLoaded(loadedStory: Story) {
         story = loadedStory
@@ -141,6 +100,20 @@ class NewWorkspaceViewModel(
         }
     }
 
+    //endregion
+
+    //region Select Team
+
+    private val _team = MutableStateFlow<TeamOption?>(null)
+    val team: StateFlow<TeamOption?> = _team.asStateFlow()
+
+    private val _teamOptions = MutableStateFlow<List<TeamOption>>(emptyList())
+    val teamOptions: StateFlow<List<TeamOption>> = _teamOptions.asStateFlow()
+
+    val canForwardFromSelectTeamStep: StateFlow<Boolean> =
+        combine(_team, _teamOptions) { team, options -> team != null && team in options }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
     fun backFromSelectTeamStep() {
         _step.value = NewWorkspaceStep.SELECT_STORY
     }
@@ -159,6 +132,20 @@ class NewWorkspaceViewModel(
         }
     }
 
+    //endregion
+
+    //region Select Role of Villager
+
+    private val _villagerRole = MutableStateFlow<VillagerRoleOption?>(null)
+    val villagerRole: StateFlow<VillagerRoleOption?> = _villagerRole.asStateFlow()
+
+    private val _villagerRoleOptions = MutableStateFlow<List<VillagerRoleOption>>(emptyList())
+    val villagerRoleOptions: StateFlow<List<VillagerRoleOption>> = _villagerRoleOptions.asStateFlow()
+
+    val canForwardFromSelectRoleOfVillagerStep: StateFlow<Boolean> =
+        combine(_villagerRole, _villagerRoleOptions) { role, options -> role != null && role in options }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
     fun backFromSelectRoleOfVillagerStep() {
         _step.value = NewWorkspaceStep.SELECT_TEAM
     }
@@ -172,6 +159,20 @@ class NewWorkspaceViewModel(
         moveToInputNameStep()
     }
 
+    //endregion
+
+    //region Select Role of Wolf
+
+    private val _wolfRole = MutableStateFlow<WolfRoleOption?>(null)
+    val wolfRole: StateFlow<WolfRoleOption?> = _wolfRole.asStateFlow()
+
+    private val _wolfRoleOptions = MutableStateFlow<List<WolfRoleOption>>(emptyList())
+    val wolfRoleOptions: StateFlow<List<WolfRoleOption>> = _wolfRoleOptions.asStateFlow()
+
+    val canForwardFromSelectRoleOfWolfStep: StateFlow<Boolean> =
+        combine(_wolfRole, _wolfRoleOptions) { role, options -> role != null && role in options }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
     fun backFromSelectRoleOfWolfStep() {
         _step.value = NewWorkspaceStep.SELECT_TEAM
     }
@@ -184,6 +185,17 @@ class NewWorkspaceViewModel(
     fun forwardFromSelectRoleOfWolfStep() {
         moveToInputNameStep()
     }
+
+    //endregion
+
+    //region Input Name
+
+    private val _name = MutableStateFlow("")
+    val name: StateFlow<String> = _name.asStateFlow()
+
+    val canForwardFromInputNameStep: StateFlow<Boolean> =
+        _name.map { it.isNotEmpty() }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     private fun moveToInputNameStep() {
         val role = roleNameOf(_team.value, _villagerRole.value, _wolfRole.value)
@@ -230,6 +242,16 @@ class NewWorkspaceViewModel(
     fun forwardFromInputNameStep() {
         _step.value = NewWorkspaceStep.CONFIRM
     }
+
+    //endregion
+
+    //region Confirm
+
+    private val _registering = MutableStateFlow(false)
+    val registering: StateFlow<Boolean> = _registering.asStateFlow()
+
+    private val _registeredWorkspaceId = MutableStateFlow<String?>(null)
+    val registeredWorkspaceId: StateFlow<String?> = _registeredWorkspaceId.asStateFlow()
 
     fun backFromConfirmStep() {
         _step.value = NewWorkspaceStep.INPUT_NAME
@@ -297,4 +319,6 @@ class NewWorkspaceViewModel(
             _registeredWorkspaceId.value = workspace.id
         }
     }
+
+    //endregion
 }
