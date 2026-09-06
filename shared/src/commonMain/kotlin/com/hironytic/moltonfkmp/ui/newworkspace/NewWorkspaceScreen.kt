@@ -4,11 +4,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.backhandler.BackHandler
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun NewWorkspaceScreen(
     onExit: () -> Unit,
@@ -22,16 +22,21 @@ fun NewWorkspaceScreen(
         registeredWorkspaceId?.let { onRegistered(it) }
     }
 
-    BackHandler {
-        when (step) {
-            NewWorkspaceStep.SELECT_STORY -> onExit()
-            NewWorkspaceStep.SELECT_TEAM -> viewModel.backFromSelectTeamStep()
-            NewWorkspaceStep.SELECT_ROLE_OF_VILLAGER -> viewModel.backFromSelectRoleOfVillagerStep()
-            NewWorkspaceStep.SELECT_ROLE_OF_WOLF -> viewModel.backFromSelectRoleOfWolfStep()
-            NewWorkspaceStep.INPUT_NAME -> viewModel.backFromInputNameStep()
-            NewWorkspaceStep.CONFIRM -> viewModel.backFromConfirmStep()
-        }
-    }
+    val navigationState = rememberNavigationEventState(currentInfo = NavigationEventInfo.None)
+    NavigationBackHandler(
+        state = navigationState,
+        onBackCancelled = {},
+        onBackCompleted = {
+            when (step) {
+                NewWorkspaceStep.SELECT_STORY -> onExit()
+                NewWorkspaceStep.SELECT_TEAM -> viewModel.backFromSelectTeamStep()
+                NewWorkspaceStep.SELECT_ROLE_OF_VILLAGER -> viewModel.backFromSelectRoleOfVillagerStep()
+                NewWorkspaceStep.SELECT_ROLE_OF_WOLF -> viewModel.backFromSelectRoleOfWolfStep()
+                NewWorkspaceStep.INPUT_NAME -> viewModel.backFromInputNameStep()
+                NewWorkspaceStep.CONFIRM -> viewModel.backFromConfirmStep()
+            }
+        },
+    )
 
     when (step) {
         NewWorkspaceStep.SELECT_STORY -> SelectStoryStep(viewModel, onExit)
