@@ -4,8 +4,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.backhandler.BackHandler
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun NewWorkspaceScreen(
     onExit: () -> Unit,
@@ -17,6 +20,17 @@ fun NewWorkspaceScreen(
 
     LaunchedEffect(registeredWorkspaceId) {
         registeredWorkspaceId?.let { onRegistered(it) }
+    }
+
+    BackHandler {
+        when (step) {
+            NewWorkspaceStep.SELECT_STORY -> onExit()
+            NewWorkspaceStep.SELECT_TEAM -> viewModel.backFromSelectTeamStep()
+            NewWorkspaceStep.SELECT_ROLE_OF_VILLAGER -> viewModel.backFromSelectRoleOfVillagerStep()
+            NewWorkspaceStep.SELECT_ROLE_OF_WOLF -> viewModel.backFromSelectRoleOfWolfStep()
+            NewWorkspaceStep.INPUT_NAME -> viewModel.backFromInputNameStep()
+            NewWorkspaceStep.CONFIRM -> viewModel.backFromConfirmStep()
+        }
     }
 
     when (step) {
