@@ -23,10 +23,6 @@ class SelectWorkspaceViewModel(
     private val _workspacePendingDeletion = MutableStateFlow<Workspace?>(null)
     val workspacePendingDeletion: StateFlow<Workspace?> = _workspacePendingDeletion.asStateFlow()
 
-    init {
-        reload()
-    }
-
     fun reload() {
         viewModelScope.launch {
             _uiState.value = SelectWorkspaceUiState.Loading

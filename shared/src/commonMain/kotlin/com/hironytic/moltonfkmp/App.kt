@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.hironytic.moltonfkmp.navigation.Route
 import com.hironytic.moltonfkmp.ui.NotYetImplementedScreen
+import com.hironytic.moltonfkmp.ui.newworkspace.NewWorkspaceScreen
 import com.hironytic.moltonfkmp.ui.selectworkspace.SelectWorkspaceScreen
 
 @Composable
@@ -23,9 +24,13 @@ fun App() {
                 )
             }
             composable<Route.NewWorkspace> {
-                NotYetImplementedScreen(
-                    title = "新規観戦データ作成",
-                    onBack = { navController.popBackStack() },
+                NewWorkspaceScreen(
+                    onExit = { navController.popBackStack() },
+                    onRegistered = { workspaceId ->
+                        navController.navigate(Route.Watching(workspaceId)) {
+                            popUpTo(Route.SelectWorkspace)
+                        }
+                    },
                 )
             }
             composable<Route.Watching> {
