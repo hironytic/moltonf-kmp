@@ -27,8 +27,8 @@ fun ConfirmStep(viewModel: NewWorkspaceViewModel) {
         modifier = Modifier.fillMaxSize().safeContentPadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("観戦データ「$name」を登録します。", style = MaterialTheme.typography.headlineSmall)
-        Text("選択した役職に応じてあなたが着目するキャラクターが選ばれます。選ばれたキャラクターは、1日目の先頭で明らかになります。")
+        Text("観戦データの登録", style = MaterialTheme.typography.headlineSmall)
+        Text("観戦データ「$name」を登録します。")
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = { viewModel.backFromConfirmStep() }, enabled = !registering) { Text("戻る") }
@@ -37,5 +37,11 @@ fun ConfirmStep(viewModel: NewWorkspaceViewModel) {
                 enabled = !registering,
             ) { Text("登録してプロローグへ") }
         }
+
+        Text(
+            "選択した役職に応じてあなたが着目するキャラクターが選ばれます。" +
+                "選ばれたキャラクターは、1日目の先頭で明らかになります。" +
+                "どのキャラクターになるかを楽しみにしながらプロローグをお読みください。",
+        )
     }
 }

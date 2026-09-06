@@ -52,8 +52,13 @@ fun SelectStoryStep(viewModel: NewWorkspaceViewModel, onExit: () -> Unit) {
         modifier = Modifier.fillMaxSize().safeContentPadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("観戦データの作成", style = MaterialTheme.typography.headlineSmall)
-        Text("観戦したい村のJindolf XmlScheme形式のアーカイブ(XMLファイル)を選択してください。")
+        Text("村データの読み込み", style = MaterialTheme.typography.headlineSmall)
+        Text(
+            "Jindolf XmlScheme (https://github.com/olyutorskii/XmlScheme) 形式のXMLファイルを用意してください。" +
+                "そのXMLファイルの村データを読み込みます。" +
+                "読み込んだデータは端末内のストレージに保存されます" +
+                "（観戦データが作成された後は、ここで選択したXMLファイルはもう参照しません）。",
+        )
 
         if (storyName != null) {
             Text("読み込み済みの村: $storyName", fontWeight = FontWeight.Bold)

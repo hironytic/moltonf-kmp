@@ -2,11 +2,13 @@ package com.hironytic.moltonfkmp.ui.newworkspace
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -20,12 +22,15 @@ import androidx.compose.ui.unit.dp
 fun SelectTeamStep(viewModel: NewWorkspaceViewModel) {
     val teamOptions by viewModel.teamOptions.collectAsState()
     val team by viewModel.team.collectAsState()
+    val canForward by viewModel.canForwardFromSelectTeamStep.collectAsState()
 
     Column(
         modifier = Modifier.fillMaxSize().safeContentPadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("観戦する陣営を選んでください", style = MaterialTheme.typography.headlineSmall)
+        Text("どの視点で観戦しますか？", style = MaterialTheme.typography.headlineSmall)
+        Text("エピローグになるまでは、選んだ視点に合わせて表示されるものが変わります。例えば、村人の視点では人狼たちのささやきは表示されません。")
+        Text("村人、人狼を選択した場合は、続けて次の画面で詳細を選択できます。")
 
         OptionChooser(
             options = teamOptions,
@@ -40,6 +45,9 @@ fun SelectTeamStep(viewModel: NewWorkspaceViewModel) {
             }
         }
 
-        TextButton(onClick = { viewModel.backFromSelectTeamStep() }) { Text("戻る") }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = { viewModel.backFromSelectTeamStep() }) { Text("戻る") }
+            Button(onClick = { viewModel.forwardFromSelectTeamStep() }, enabled = canForward) { Text("次へ") }
+        }
     }
 }

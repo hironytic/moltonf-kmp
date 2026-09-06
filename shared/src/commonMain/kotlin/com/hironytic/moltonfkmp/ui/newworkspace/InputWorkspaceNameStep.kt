@@ -23,12 +23,14 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun InputWorkspaceNameStep(viewModel: NewWorkspaceViewModel) {
     val name by viewModel.name.collectAsState()
+    val canForward by viewModel.canForwardFromInputNameStep.collectAsState()
 
     Column(
         modifier = Modifier.fillMaxSize().safeContentPadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("観戦データの名前を入力してください", style = MaterialTheme.typography.headlineSmall)
+        Text("観戦データの名前", style = MaterialTheme.typography.headlineSmall)
+        Text("この観戦データに後で自分が見てわかりやすい名前を付けてください。")
 
         OutlinedTextField(
             value = name,
@@ -41,7 +43,7 @@ fun InputWorkspaceNameStep(viewModel: NewWorkspaceViewModel) {
             TextButton(onClick = { viewModel.backFromInputNameStep() }) { Text("戻る") }
             Button(
                 onClick = { viewModel.forwardFromInputNameStep() },
-                enabled = name.isNotEmpty(),
+                enabled = canForward,
             ) { Text("次へ") }
         }
     }
