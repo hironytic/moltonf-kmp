@@ -17,7 +17,7 @@ sealed interface Route {
     @Serializable
     data object WatchingHome : Route
 
-    /** Dialog destination of the [Watching] graph: the talk-thread modal opened from a link tap. */
+    /** Full-screen destination of the [Watching] graph: the talk thread opened from a link tap. */
     @Serializable
     data object TalkThread : Route
 }

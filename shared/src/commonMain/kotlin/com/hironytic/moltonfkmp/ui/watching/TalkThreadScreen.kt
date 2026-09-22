@@ -18,9 +18,9 @@ import androidx.compose.ui.unit.dp
 import com.hironytic.moltonfkmp.story.TalkWithDay
 
 /**
- * Modal shown when a talk-mention link is tapped: the linking talk plus the talk(s) it points
+ * Screen shown when a talk-mention link is tapped: the linking talk plus the talk(s) it points
  * to. Tapping a link inside any of the displayed talks toggles a further expansion directly
- * below it (tree-like open/close), instead of opening another modal.
+ * below it (tree-like open/close), instead of navigating to another screen.
  */
 @Composable
 fun TalkThreadScreen(
@@ -30,8 +30,8 @@ fun TalkThreadScreen(
     val uiState by viewModel.uiState.collectAsState()
     val root by viewModel.talkThread.collectAsState()
 
-    // Clears the shared talk-thread state whenever this dialog leaves composition, regardless of
-    // whether it was dismissed via the close button, the scrim, or a system back gesture.
+    // Clears the shared talk-thread state whenever this screen leaves composition, regardless of
+    // whether it was dismissed via the close button or a system back gesture.
     DisposableEffect(Unit) {
         onDispose { viewModel.closeTalkThread() }
     }

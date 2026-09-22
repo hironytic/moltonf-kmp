@@ -18,6 +18,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -55,8 +58,15 @@ fun WatchingScreen(
                         isTalkVisible(state.story, talkWithDay.day, talkWithDay.talk, viewerCharacter, state.dayProgress)
                 }
                 val listState = rememberLazyListState()
+                // Reset to top only when the day actually changes, not merely when this screen
+                // re-enters composition (e.g. returning from TalkThreadScreen) — otherwise the
+                // scroll position restored by rememberLazyListState would be immediately discarded.
+                var scrolledToTopForDay by rememberSaveable { mutableStateOf(state.currentDay) }
                 LaunchedEffect(state.currentDay) {
-                    listState.scrollToItem(0)
+                    if (state.currentDay != scrolledToTopForDay) {
+                        listState.scrollToItem(0)
+                        scrolledToTopForDay = state.currentDay
+                    }
                 }
 
                 Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {

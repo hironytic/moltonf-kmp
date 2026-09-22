@@ -7,7 +7,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.dialog
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
@@ -60,7 +59,7 @@ fun App() {
                         onOpenTalkThread = { navController.navigate(Route.TalkThread) },
                     )
                 }
-                dialog<Route.TalkThread> { backStackEntry ->
+                composable<Route.TalkThread> { backStackEntry ->
                     val viewModel = watchingViewModel(navController, backStackEntry)
                     TalkThreadScreen(
                         viewModel = viewModel,
@@ -74,8 +73,8 @@ fun App() {
 
 /**
  * Resolves the [WatchingViewModel] scoped to the enclosing `Route.Watching` graph, so the
- * WatchingHome screen and the TalkThread dialog share the same instance (and therefore the same
- * loaded story and talk-thread state).
+ * WatchingHome and TalkThread screens share the same instance (and therefore the same loaded
+ * story and talk-thread state).
  */
 @Composable
 private fun watchingViewModel(
