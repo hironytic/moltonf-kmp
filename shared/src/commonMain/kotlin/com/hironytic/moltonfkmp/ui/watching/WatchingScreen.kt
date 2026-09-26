@@ -10,10 +10,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -25,6 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hironytic.moltonfkmp.story.TalkWithDay
+import com.hironytic.moltonfkmp.ui.theme.MoltonfTopAppBar
+import com.hironytic.moltonfkmp.ui.theme.NeutralOutlinedButton
 
 @Composable
 fun WatchingScreen(
@@ -35,11 +36,12 @@ fun WatchingScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         topBar = {
-            TopAppBar(
+            MoltonfTopAppBar(
                 title = { Text(((uiState as? WatchingUiState.Loaded)?.story?.villageFullName) ?: "観戦") },
                 navigationIcon = {
-                    TextButton(onClick = onBack) { Text("戻る") }
+                    NeutralOutlinedButton(onClick = onBack, text = "戻る")
                 },
             )
         },

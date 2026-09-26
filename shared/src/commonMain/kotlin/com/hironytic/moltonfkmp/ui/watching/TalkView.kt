@@ -26,15 +26,21 @@ import com.hironytic.moltonfkmp.story.TalkWithDay
 import com.hironytic.moltonfkmp.story.resolveAvatarFaceIcon
 import com.hironytic.moltonfkmp.story.resolveGraveIcon
 import com.hironytic.moltonfkmp.story.timeString
+import com.hironytic.moltonfkmp.ui.theme.MoltonfColors
 
 private fun talkTypeContainerColor(talkType: TalkType) = when (talkType) {
-    TalkType.PUBLIC -> androidx.compose.ui.graphics.Color(0xFFECECEC)
-    TalkType.WOLF -> androidx.compose.ui.graphics.Color(0xFFFFB3B3)
-    TalkType.PRIVATE -> androidx.compose.ui.graphics.Color(0xFFCFCFCF)
-    TalkType.GRAVE -> androidx.compose.ui.graphics.Color(0xFFB9CDE0)
+    TalkType.PUBLIC -> MoltonfColors.talkPublic
+    TalkType.WOLF -> MoltonfColors.talkWolf
+    TalkType.PRIVATE -> MoltonfColors.talkPrivate
+    TalkType.GRAVE -> MoltonfColors.talkGrave
 }
 
-private val talkTypeContentColor = androidx.compose.ui.graphics.Color(0xFF000000)
+private fun talkTypeLinkColor(talkType: TalkType) = when (talkType) {
+    TalkType.PUBLIC -> MoltonfColors.talkLinkPublic
+    TalkType.WOLF -> MoltonfColors.talkLinkWolf
+    TalkType.PRIVATE -> MoltonfColors.talkLinkPrivate
+    TalkType.GRAVE -> MoltonfColors.talkLinkGrave
+}
 
 /**
  * Renders a single [Talk] (or an [com.hironytic.moltonfkmp.story.Assault] event disguised as a
@@ -62,12 +68,12 @@ fun TalkView(
     Column(modifier = modifier.fillMaxWidth()) {
         Row {
             if (talk.talkNo != null) {
-                Text("${talk.talkNo}.", color = MaterialTheme.colorScheme.outline, style = MaterialTheme.typography.labelSmall)
+                Text("${talk.talkNo}.", color = MoltonfColors.talkTime, style = MaterialTheme.typography.labelSmall)
                 Spacer(Modifier.width(4.dp))
             }
-            Text(avatar?.fullName ?: talk.xname, style = MaterialTheme.typography.labelMedium)
+            Text(avatar?.fullName ?: talk.xname, color = MoltonfColors.avatarName, style = MaterialTheme.typography.labelMedium)
             Spacer(Modifier.width(4.dp))
-            Text(timeString(talk.time), color = MaterialTheme.colorScheme.outline, style = MaterialTheme.typography.labelSmall)
+            Text(timeString(talk.time), color = MoltonfColors.talkTime, style = MaterialTheme.typography.labelSmall)
         }
         Row(modifier = Modifier.padding(top = 4.dp), verticalAlignment = Alignment.Top) {
             FaceIconImage(
@@ -79,7 +85,8 @@ fun TalkView(
             TalkMessageText(
                 lines = lines,
                 onLinkClick = { linkKey, segment -> onLinkClick(linkKey, segment.talks) },
-                color = talkTypeContentColor,
+                color = MoltonfColors.onTalk,
+                linkColor = talkTypeLinkColor(talk.talkType),
                 modifier = Modifier
                     .weight(1f)
                     .background(talkTypeContainerColor(talk.talkType), RoundedCornerShape(8.dp))

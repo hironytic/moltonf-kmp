@@ -9,14 +9,14 @@ import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.hironytic.moltonfkmp.ui.theme.NeutralOutlinedButton
+import com.hironytic.moltonfkmp.ui.theme.ScreenTitle
 
 @Composable
 fun SelectRoleOfVillagerStep(viewModel: NewWorkspaceViewModel) {
@@ -28,7 +28,7 @@ fun SelectRoleOfVillagerStep(viewModel: NewWorkspaceViewModel) {
         modifier = Modifier.fillMaxSize().safeContentPadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("村人側の役職は？", style = MaterialTheme.typography.headlineSmall)
+        ScreenTitle("村人側の役職は？")
         Text("村人側の役職を選んでください。村人側の勝利条件は全ての人狼を処刑することです。")
 
         OptionChooser(
@@ -48,7 +48,7 @@ fun SelectRoleOfVillagerStep(viewModel: NewWorkspaceViewModel) {
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = { viewModel.backFromSelectRoleOfVillagerStep() }) { Text("戻る") }
+            NeutralOutlinedButton(onClick = { viewModel.backFromSelectRoleOfVillagerStep() }, text = "戻る")
             Button(onClick = { viewModel.forwardFromSelectRoleOfVillagerStep() }, enabled = canForward) { Text("次へ") }
         }
     }

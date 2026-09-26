@@ -1,6 +1,5 @@
 package com.hironytic.moltonfkmp
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.Preview
@@ -16,6 +15,7 @@ import coil3.network.ktor3.KtorNetworkFetcherFactory
 import com.hironytic.moltonfkmp.navigation.Route
 import com.hironytic.moltonfkmp.ui.newworkspace.NewWorkspaceScreen
 import com.hironytic.moltonfkmp.ui.selectworkspace.SelectWorkspaceScreen
+import com.hironytic.moltonfkmp.ui.theme.MoltonfTheme
 import com.hironytic.moltonfkmp.ui.watching.TalkThreadScreen
 import com.hironytic.moltonfkmp.ui.watching.WatchingScreen
 import com.hironytic.moltonfkmp.ui.watching.WatchingViewModel
@@ -31,7 +31,7 @@ fun App() {
             .build()
     }
 
-    MaterialTheme {
+    MoltonfTheme {
         val navController = rememberNavController()
         NavHost(navController = navController, startDestination = Route.SelectWorkspace) {
             composable<Route.SelectWorkspace> {

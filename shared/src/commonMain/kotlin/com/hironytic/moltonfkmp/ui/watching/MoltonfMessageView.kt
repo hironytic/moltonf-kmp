@@ -10,14 +10,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.hironytic.moltonfkmp.ui.theme.MoltonfColors
 
 @Composable
 fun MoltonfMessageView(message: WatchingElement.Message, modifier: Modifier = Modifier) {
-    val color = Color(0xFFB08D2A)
+    val color = MoltonfColors.moltonfMessage
     OutlinedCard(
         modifier = modifier.fillMaxWidth(),
         border = BorderStroke(1.dp, color),
-        colors = CardDefaults.outlinedCardColors(contentColor = color),
+        colors = CardDefaults.outlinedCardColors(containerColor = Color.Transparent, contentColor = color),
     ) {
         Text(
             text = message.messageLines.joinToString("\n"),
