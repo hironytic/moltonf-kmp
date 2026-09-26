@@ -17,6 +17,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import com.hironytic.moltonfkmp.ui.theme.MoltonfColors
 
 private const val LINK_ANNOTATION_TAG = "link"
 
@@ -32,7 +33,7 @@ fun TalkMessageText(
     onLinkClick: (linkKey: String, segment: MessageSegment.LinkToTalk) -> Unit,
     modifier: Modifier = Modifier,
     color: Color = LocalContentColor.current,
-    linkColor: Color = Color(0xFFD32F2F),
+    linkColor: Color = MoltonfColors.talkLinkPublic,
 ) {
     val linkMap = HashMap<String, MessageSegment.LinkToTalk>()
     val annotatedString = buildAnnotatedString {

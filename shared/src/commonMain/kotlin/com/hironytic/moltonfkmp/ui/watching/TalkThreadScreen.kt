@@ -5,10 +5,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -16,6 +15,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hironytic.moltonfkmp.story.TalkWithDay
+import com.hironytic.moltonfkmp.ui.theme.MoltonfTopAppBar
+import com.hironytic.moltonfkmp.ui.theme.NeutralOutlinedButton
 
 /**
  * Screen shown when a talk-mention link is tapped: the linking talk plus the talk(s) it points
@@ -37,11 +38,12 @@ fun TalkThreadScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         topBar = {
-            TopAppBar(
+            MoltonfTopAppBar(
                 title = { Text("発言のつながり") },
                 navigationIcon = {
-                    TextButton(onClick = onClose) { Text("閉じる") }
+                    NeutralOutlinedButton(onClick = onClose, text = "閉じる")
                 },
             )
         },

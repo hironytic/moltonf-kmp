@@ -29,11 +29,12 @@ fun <T> OptionChooser(
                 onClick = { onChoose(option) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     contentColor = if (isSelected) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
                 ),
                 border = BorderStroke(
-                    width = if (isSelected) 2.dp else 1.dp,
-                    color = if (isSelected) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
+                    width = 2.dp,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
                 ),
             ) {
                 Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {

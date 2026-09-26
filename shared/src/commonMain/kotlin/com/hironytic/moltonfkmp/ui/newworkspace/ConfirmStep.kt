@@ -9,14 +9,14 @@ import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.hironytic.moltonfkmp.ui.theme.NeutralOutlinedButton
+import com.hironytic.moltonfkmp.ui.theme.ScreenTitle
 
 @Composable
 fun ConfirmStep(viewModel: NewWorkspaceViewModel) {
@@ -27,11 +27,11 @@ fun ConfirmStep(viewModel: NewWorkspaceViewModel) {
         modifier = Modifier.fillMaxSize().safeContentPadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("観戦データの登録", style = MaterialTheme.typography.headlineSmall)
+        ScreenTitle("観戦データの登録")
         Text("観戦データ「$name」を登録します。")
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = { viewModel.backFromConfirmStep() }, enabled = !registering) { Text("戻る") }
+            NeutralOutlinedButton(onClick = { viewModel.backFromConfirmStep() }, enabled = !registering, text = "戻る")
             Button(
                 onClick = { viewModel.registerNewWorkspace() },
                 enabled = !registering,

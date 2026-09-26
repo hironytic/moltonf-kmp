@@ -13,7 +13,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.hironytic.moltonfkmp.story.parseStory
+import com.hironytic.moltonfkmp.ui.theme.NeutralOutlinedButton
+import com.hironytic.moltonfkmp.ui.theme.ScreenTitle
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.readString
@@ -52,7 +53,7 @@ fun SelectStoryStep(viewModel: NewWorkspaceViewModel, onExit: () -> Unit) {
         modifier = Modifier.fillMaxSize().safeContentPadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("村データの読み込み", style = MaterialTheme.typography.headlineSmall)
+        ScreenTitle("村データの読み込み")
         Text(
             "Jindolf XmlScheme (https://github.com/olyutorskii/XmlScheme) 形式のXMLファイルを用意してください。" +
                 "そのXMLファイルの村データを読み込みます。" +
@@ -72,7 +73,7 @@ fun SelectStoryStep(viewModel: NewWorkspaceViewModel, onExit: () -> Unit) {
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            TextButton(onClick = onExit) { Text("戻る") }
+            NeutralOutlinedButton(onClick = onExit, text = "戻る")
             if (storyName != null) {
                 Button(onClick = { viewModel.forwardFromSelectStoryStep() }) { Text("次へ") }
             }
@@ -82,10 +83,11 @@ fun SelectStoryStep(viewModel: NewWorkspaceViewModel, onExit: () -> Unit) {
     if (archiveLoadError) {
         AlertDialog(
             onDismissRequest = { viewModel.dismissArchiveLoadError() },
+            titleContentColor = MaterialTheme.colorScheme.inverseSurface,
             title = { Text("村データの読み込み") },
             text = { Text("指定されたファイルから、村データを読み込めませんでした。") },
             confirmButton = {
-                TextButton(onClick = { viewModel.dismissArchiveLoadError() }) { Text("OK") }
+                Button(onClick = { viewModel.dismissArchiveLoadError() }) { Text("OK") }
             },
         )
     }

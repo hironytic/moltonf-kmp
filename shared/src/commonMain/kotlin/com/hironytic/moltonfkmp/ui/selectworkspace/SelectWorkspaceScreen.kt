@@ -11,11 +11,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -23,6 +26,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.hironytic.moltonfkmp.ui.theme.MoltonfTopAppBar
+import com.hironytic.moltonfkmp.ui.theme.NeutralOutlinedButton
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -39,7 +44,8 @@ fun SelectWorkspaceScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("観戦データ") }) },
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        topBar = { MoltonfTopAppBar(title = { Text("観戦データ") }) },
     ) { innerPadding ->
         when (val state = uiState) {
             is SelectWorkspaceUiState.Loading -> {
@@ -70,12 +76,22 @@ fun SelectWorkspaceScreen(
                                 ListItem(
                                     headlineContent = { Text(workspace.name) },
                                     trailingContent = {
-                                        TextButton(onClick = { viewModel.requestDeletion(workspace) }) {
+                                        TextButton(
+                                            onClick = { viewModel.requestDeletion(workspace) },
+                                            colors = ButtonDefaults.textButtonColors(
+                                                contentColor = MaterialTheme.colorScheme.error,
+                                            ),
+                                        ) {
                                             Text("削除")
                                         }
                                     },
+                                    colors = ListItemDefaults.colors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                        headlineColor = MaterialTheme.colorScheme.onSurface,
+                                    ),
                                     modifier = Modifier.clickable { onOpenWorkspace(workspace.id) },
                                 )
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outline)
                             }
                         }
                         Button(
@@ -94,13 +110,14 @@ fun SelectWorkspaceScreen(
     if (workspace != null) {
         AlertDialog(
             onDismissRequest = { viewModel.cancelDeletion() },
+            titleContentColor = MaterialTheme.colorScheme.inverseSurface,
             title = { Text("確認") },
             text = { Text("「${workspace.name}」を削除しますか?") },
             confirmButton = {
-                TextButton(onClick = { viewModel.confirmDeletion() }) { Text("削除") }
+                Button(onClick = { viewModel.confirmDeletion() }) { Text("削除") }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.cancelDeletion() }) { Text("キャンセル") }
+                NeutralOutlinedButton(onClick = { viewModel.cancelDeletion() }, text = "キャンセル")
             },
         )
     }
