@@ -6,8 +6,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
 /**
- * Same color scheme as moltonf-web: a dark theme based on Tailwind's gray palette, with red as
- * the accent color. The page is [Palette.Gray900] and the content panels are black.
+ * A dark color scheme based on Tailwind's gray palette, with red as the accent color. The page is [Palette.Gray900] and the content panels are black.
  */
 private val MoltonfColorScheme = darkColorScheme(
     primary = Palette.Red600,

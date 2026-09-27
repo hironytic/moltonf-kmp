@@ -3,7 +3,7 @@ package com.hironytic.moltonfkmp.ui.theme
 import androidx.compose.ui.graphics.Color
 
 /**
- * Tailwind CSS (v4) palette entries used by moltonf-web, so both apps share the same colors.
+ * Tailwind CSS (v4) palette entries used by the app.
  */
 internal object Palette {
     val Black = Color(0xFF000000)
@@ -17,7 +17,7 @@ internal object Palette {
     val Gray800 = Color(0xFF1E2939)
     val Gray900 = Color(0xFF101828)
 
-    /** `primary-500` customized in moltonf-web's app.css; used for the focus ring of inputs. */
+    /** Customized `primary-500`; used for the focus ring of inputs. */
     val Primary500 = Color(0xFFFE795D)
 
     val Red500 = Color(0xFFFB2C36)
@@ -28,7 +28,7 @@ internal object Palette {
 
 /**
  * Colors which have no Material 3 counterpart: the ones used to draw the story itself
- * (talks, story events and so on), taken from moltonf-web.
+ * (talks, story events and so on).
  */
 object MoltonfColors {
     /** Background of a talk balloon and the color of the tail. */
