@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 /**
- * A top bar like the navigation bar of moltonf-web: black with a thin page-colored border below.
+ * A top bar: black with a thin page-colored border below.
  */
 @Composable
 fun MoltonfTopAppBar(
@@ -61,7 +61,7 @@ fun NeutralOutlinedButton(
 }
 
 /**
- * A heading of a screen's content, like the header title of moltonf-web.
+ * A heading of a screen's content.
  */
 @Composable
 fun ScreenTitle(text: String, modifier: Modifier = Modifier) {
@@ -75,8 +75,7 @@ fun ScreenTitle(text: String, modifier: Modifier = Modifier) {
 }
 
 /**
- * Colors of a text field like the input of moltonf-web: gray filled, white text, and a colored
- * border only while focused.
+ * Colors of a text field: gray filled, white text, and a colored border only while focused.
  */
 @Composable
 fun moltonfTextFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
