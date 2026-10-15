@@ -22,22 +22,28 @@ private val symbolColors: Map<Char, Color> = mapOf(
  *
  * - Marker symbols (▼, ● and so on) get their own colors.
  * - A range enclosed by 【 and 】 (brackets included) gets [MoltonfColors.messageBracketRange];
- *   the innermost range wins when nested, and unmatched brackets are not highlighted.
+ *   when nested, only the innermost range is highlighted (not the outer ones), and unmatched
+ *   brackets are not highlighted.
  * - A symbol inside a bracketed range keeps the symbol's color.
  */
 fun computeHighlightColors(line: String): List<Color?> {
     val colors = arrayOfNulls<Color>(line.length)
     line.forEachIndexed { i, ch -> colors[i] = symbolColors[ch] }
 
-    val openStack = ArrayList<Int>()
+    // Open brackets, each with whether a closed range has been found inside it.
+    val openStack = ArrayList<IntArray>()
     val ranges = ArrayList<IntRange>()
     line.forEachIndexed { i, ch ->
         when (ch) {
-            BRACKET_OPEN -> openStack.add(i)
-            BRACKET_CLOSE -> if (openStack.isNotEmpty()) ranges.add(openStack.removeAt(openStack.lastIndex)..i)
+            BRACKET_OPEN -> openStack.add(intArrayOf(i, 0))
+            BRACKET_CLOSE -> if (openStack.isNotEmpty()) {
+                val open = openStack.removeAt(openStack.lastIndex)
+                // Only innermost ranges (those containing no other range) are highlighted.
+                if (open[1] == 0) ranges.add(open[0]..i)
+                openStack.lastOrNull()?.set(1, 1)
+            }
         }
     }
-    // Inner ranges close first, so they claim their characters before the outer ones.
     for (range in ranges) {
         for (i in range) {
             if (colors[i] == null) colors[i] = MoltonfColors.messageBracketRange

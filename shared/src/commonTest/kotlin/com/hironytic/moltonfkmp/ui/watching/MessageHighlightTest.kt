@@ -25,8 +25,8 @@ class MessageHighlightTest {
     }
 
     @Test
-    fun nestedRangesColorEverythingInside() {
+    fun onlyInnermostNestedRangeIsColored() {
         val r = MoltonfColors.messageBracketRange
-        assertEquals(List(7) { r }, computeHighlightColors("【a【b】c】"))
+        assertEquals(listOf(null, null, r, r, r, null, null), computeHighlightColors("【a【b】c】"))
     }
 }
