@@ -39,9 +39,27 @@ fun TalkMessageText(
     val annotatedString = buildAnnotatedString {
         lines.forEachIndexed { lineIndex, segments ->
             if (lineIndex != 0) append('\n')
+            val highlights = computeHighlightColors(segments.joinToString("") { it.text })
+            var offset = 0
             segments.forEachIndexed { segmentIndex, segment ->
+                val segmentOffset = offset
+                offset += segment.text.length
                 when (segment) {
-                    is MessageSegment.General -> append(segment.text)
+                    is MessageSegment.General -> {
+                        var runStart = 0
+                        val text = segment.text
+                        while (runStart < text.length) {
+                            val runColor = highlights[segmentOffset + runStart]
+                            var runEnd = runStart + 1
+                            while (runEnd < text.length && highlights[segmentOffset + runEnd] == runColor) runEnd++
+                            if (runColor == null) {
+                                append(text.substring(runStart, runEnd))
+                            } else {
+                                withStyle(SpanStyle(color = runColor)) { append(text.substring(runStart, runEnd)) }
+                            }
+                            runStart = runEnd
+                        }
+                    }
                     is MessageSegment.LinkToTalk -> {
                         val key = "$lineIndex:$segmentIndex"
                         linkMap[key] = segment

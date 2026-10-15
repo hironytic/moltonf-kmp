@@ -53,5 +53,14 @@ object MoltonfColors {
     val eventOrder = Color(0xFFFF4444)
     val eventExtra = Color(0xFF888888)
 
-    val moltonfMessage = Color(0xFFF5E8B2)
+    /** Highlight colors of marker symbols in talk messages (provisional values). */
+    val messageSymbolBlue = Color(0xFF0099FF)
+    val messageSymbolPurple = Color(0xFF9933FF)
+    val messageSymbolOrange = Color(0xFFFF8800)
+    val messageSymbolYellow = Color(0xFFFFCC33)
+
+    /** Highlight color of a range enclosed by 【 and 】 in talk messages (provisional value). */
+    val messageBracketRange = Color(0xFFFF8800)
+
+    val moltonfMessage =Color(0xFFF5E8B2)
 }
