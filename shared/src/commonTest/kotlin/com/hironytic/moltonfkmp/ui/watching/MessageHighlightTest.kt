@@ -8,14 +8,14 @@ class MessageHighlightTest {
     @Test
     fun symbolsAreColored() {
         val c = computeHighlightColors("a▼b☆")
-        assertEquals(listOf(null, MoltonfColors.messageSymbolBlue, null, MoltonfColors.messageSymbolYellow), c)
+        assertEquals(listOf(null, MoltonfColors.messageSymbolPurple, null, MoltonfColors.messageSymbolOrange), c)
     }
 
     @Test
     fun bracketRangeWithSymbolPriority() {
         val c = computeHighlightColors("x【a★】y")
         val r = MoltonfColors.messageBracketRange
-        assertEquals(listOf(null, r, r, MoltonfColors.messageSymbolYellow, r, null), c)
+        assertEquals(listOf(null, r, r, MoltonfColors.messageSymbolOrange, r, null), c)
     }
 
     @Test

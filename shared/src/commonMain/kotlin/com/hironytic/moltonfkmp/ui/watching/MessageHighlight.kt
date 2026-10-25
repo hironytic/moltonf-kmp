@@ -7,14 +7,14 @@ private const val BRACKET_OPEN = '【'
 private const val BRACKET_CLOSE = '】'
 
 private val symbolColors: Map<Char, Color> = mapOf(
-    '▼' to MoltonfColors.messageSymbolBlue,
+    '▼' to MoltonfColors.messageSymbolPurple,
     '▽' to MoltonfColors.messageSymbolPurple,
-    '●' to MoltonfColors.messageSymbolBlue,
+    '●' to MoltonfColors.messageSymbolPurple,
     '○' to MoltonfColors.messageSymbolPurple,
-    '■' to MoltonfColors.messageSymbolOrange,
-    '□' to MoltonfColors.messageSymbolOrange,
-    '★' to MoltonfColors.messageSymbolYellow,
-    '☆' to MoltonfColors.messageSymbolYellow,
+    '■' to MoltonfColors.messageSymbolPurple,
+    '□' to MoltonfColors.messageSymbolPurple,
+    '★' to MoltonfColors.messageSymbolOrange,
+    '☆' to MoltonfColors.messageSymbolOrange,
 )
 
 /**
