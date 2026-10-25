@@ -27,6 +27,19 @@ internal object Palette {
 }
 
 /**
+ * Colors used to highlight parts of a talk message: marker symbols (▼, ● and so on)
+ * and a range enclosed by 【 and 】.
+ */
+class MessageHighlightColors(
+    /** ▼ ▽ ▲ △ ● ○ ■ □ */
+    val symbolPurple: Color,
+    /** ★ ☆ */
+    val symbolOrange: Color,
+    /** Range enclosed by 【 and 】. */
+    val bracketRange: Color,
+)
+
+/**
  * Colors which have no Material 3 counterpart: the ones used to draw the story itself
  * (talks, story events and so on).
  */
@@ -52,6 +65,28 @@ object MoltonfColors {
     val eventAnnounce = Color(0xFFDDDDDD)
     val eventOrder = Color(0xFFFF4444)
     val eventExtra = Color(0xFF888888)
+
+    /** Highlight colors in talk messages for each kind of talk balloon (provisional values). */
+    val messageHighlightPublic = MessageHighlightColors(
+        symbolPurple = Color(0xFF9933FF),
+        symbolOrange = Color(0xFFFF8800),
+        bracketRange = Color(0xFF0099FF),
+    )
+    val messageHighlightWolf = MessageHighlightColors(
+        symbolPurple = Color(0xFF8833FF),
+        symbolOrange = Color(0xFF668800),
+        bracketRange = Color(0xFF0033CC),
+    )
+    val messageHighlightPrivate = MessageHighlightColors(
+        symbolPurple = Color(0xFF7700DD),
+        symbolOrange = Color(0xFFCC5500),
+        bracketRange = Color(0xFF0033CC),
+    )
+    val messageHighlightGrave = MessageHighlightColors(
+        symbolPurple = Color(0xFF7700DD),
+        symbolOrange = Color(0xFFCC5500),
+        bracketRange = Color(0xFF0033CC),
+    )
 
     val moltonfMessage = Color(0xFFF5E8B2)
 }
