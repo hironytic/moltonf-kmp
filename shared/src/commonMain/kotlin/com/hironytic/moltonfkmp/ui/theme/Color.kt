@@ -73,19 +73,19 @@ object MoltonfColors {
         bracketRange = Color(0xFF0099FF),
     )
     val messageHighlightWolf = MessageHighlightColors(
-        symbolPurple = Color(0xFF4B0082),
-        symbolOrange = Color(0xFF663300),
-        bracketRange = Color(0xFF0000AA),
+        symbolPurple = Color(0xFF8833FF),
+        symbolOrange = Color(0xFF668800),
+        bracketRange = Color(0xFF0033CC),
     )
     val messageHighlightPrivate = MessageHighlightColors(
         symbolPurple = Color(0xFF7700DD),
         symbolOrange = Color(0xFFCC5500),
-        bracketRange = Color(0xFF0000CC),
+        bracketRange = Color(0xFF0033CC),
     )
     val messageHighlightGrave = MessageHighlightColors(
         symbolPurple = Color(0xFF7700DD),
         symbolOrange = Color(0xFFCC5500),
-        bracketRange = Color(0xFF006600),
+        bracketRange = Color(0xFF0033CC),
     )
 
     val moltonfMessage = Color(0xFFF5E8B2)
