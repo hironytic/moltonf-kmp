@@ -7,7 +7,7 @@ private const val BRACKET_OPEN = '【'
 private const val BRACKET_CLOSE = '】'
 
 private fun symbolColor(ch: Char, colors: MessageHighlightColors): Color? = when (ch) {
-    '▼', '▽', '●', '○', '■', '□' -> colors.symbolPurple
+    '▼', '▽', '▲', '△', '●', '○', '■', '□' -> colors.symbolPurple
     '★', '☆' -> colors.symbolOrange
     else -> null
 }

@@ -31,7 +31,7 @@ internal object Palette {
  * and a range enclosed by 【 and 】.
  */
 class MessageHighlightColors(
-    /** ▼ ▽ ● ○ ■ □ */
+    /** ▼ ▽ ▲ △ ● ○ ■ □ */
     val symbolPurple: Color,
     /** ★ ☆ */
     val symbolOrange: Color,

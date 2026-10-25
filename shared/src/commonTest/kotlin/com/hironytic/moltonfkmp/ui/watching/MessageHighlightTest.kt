@@ -14,6 +14,11 @@ class MessageHighlightTest {
     }
 
     @Test
+    fun triangleSymbolsArePurple() {
+        assertEquals(listOf(p.symbolPurple, p.symbolPurple), computeHighlightColors("▲△", p))
+    }
+
+    @Test
     fun bracketRangeWithSymbolPriority() {
         val c = computeHighlightColors("x【a★】y", p)
         val r = p.bracketRange
