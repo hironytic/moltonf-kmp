@@ -1,34 +1,29 @@
 package com.hironytic.moltonfkmp.ui.watching
 
 import androidx.compose.ui.graphics.Color
-import com.hironytic.moltonfkmp.ui.theme.MoltonfColors
+import com.hironytic.moltonfkmp.ui.theme.MessageHighlightColors
 
 private const val BRACKET_OPEN = '【'
 private const val BRACKET_CLOSE = '】'
 
-private val symbolColors: Map<Char, Color> = mapOf(
-    '▼' to MoltonfColors.messageSymbolPurple,
-    '▽' to MoltonfColors.messageSymbolPurple,
-    '●' to MoltonfColors.messageSymbolPurple,
-    '○' to MoltonfColors.messageSymbolPurple,
-    '■' to MoltonfColors.messageSymbolPurple,
-    '□' to MoltonfColors.messageSymbolPurple,
-    '★' to MoltonfColors.messageSymbolOrange,
-    '☆' to MoltonfColors.messageSymbolOrange,
-)
+private fun symbolColor(ch: Char, colors: MessageHighlightColors): Color? = when (ch) {
+    '▼', '▽', '●', '○', '■', '□' -> colors.symbolPurple
+    '★', '☆' -> colors.symbolOrange
+    else -> null
+}
 
 /**
  * Returns the highlight color of each character of [line] (`null` for no highlight).
  *
  * - Marker symbols (▼, ● and so on) get their own colors.
- * - A range enclosed by 【 and 】 (brackets included) gets [MoltonfColors.messageBracketRange];
+ * - A range enclosed by 【 and 】 (brackets included) gets [MessageHighlightColors.bracketRange];
  *   when nested, only the innermost range is highlighted (not the outer ones), and unmatched
  *   brackets are not highlighted.
  * - A symbol inside a bracketed range keeps the symbol's color.
  */
-fun computeHighlightColors(line: String): List<Color?> {
+fun computeHighlightColors(line: String, palette: MessageHighlightColors): List<Color?> {
     val colors = arrayOfNulls<Color>(line.length)
-    line.forEachIndexed { i, ch -> colors[i] = symbolColors[ch] }
+    line.forEachIndexed { i, ch -> colors[i] = symbolColor(ch, palette) }
 
     // Open brackets, each with whether a closed range has been found inside it.
     val openStack = ArrayList<IntArray>()
@@ -46,7 +41,7 @@ fun computeHighlightColors(line: String): List<Color?> {
     }
     for (range in ranges) {
         for (i in range) {
-            if (colors[i] == null) colors[i] = MoltonfColors.messageBracketRange
+            if (colors[i] == null) colors[i] = palette.bracketRange
         }
     }
     return colors.asList()

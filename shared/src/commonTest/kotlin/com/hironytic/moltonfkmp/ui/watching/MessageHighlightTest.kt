@@ -5,28 +5,30 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class MessageHighlightTest {
+    private val p = MoltonfColors.messageHighlightPublic
+
     @Test
     fun symbolsAreColored() {
-        val c = computeHighlightColors("a▼b☆")
-        assertEquals(listOf(null, MoltonfColors.messageSymbolPurple, null, MoltonfColors.messageSymbolOrange), c)
+        val c = computeHighlightColors("a▼b☆", p)
+        assertEquals(listOf(null, p.symbolPurple, null, p.symbolOrange), c)
     }
 
     @Test
     fun bracketRangeWithSymbolPriority() {
-        val c = computeHighlightColors("x【a★】y")
-        val r = MoltonfColors.messageBracketRange
-        assertEquals(listOf(null, r, r, MoltonfColors.messageSymbolOrange, r, null), c)
+        val c = computeHighlightColors("x【a★】y", p)
+        val r = p.bracketRange
+        assertEquals(listOf(null, r, r, p.symbolOrange, r, null), c)
     }
 
     @Test
     fun unmatchedBracketsAreIgnored() {
-        assertEquals(listOf<Any?>(null, null, null), computeHighlightColors("【ax"))
-        assertEquals(listOf<Any?>(null, null), computeHighlightColors("a】"))
+        assertEquals(listOf<Any?>(null, null, null), computeHighlightColors("【ax", p))
+        assertEquals(listOf<Any?>(null, null), computeHighlightColors("a】", p))
     }
 
     @Test
     fun onlyInnermostNestedRangeIsColored() {
-        val r = MoltonfColors.messageBracketRange
-        assertEquals(listOf(null, null, r, r, r, null, null), computeHighlightColors("【a【b】c】"))
+        val r = p.bracketRange
+        assertEquals(listOf(null, null, r, r, r, null, null), computeHighlightColors("【a【b】c】", p))
     }
 }

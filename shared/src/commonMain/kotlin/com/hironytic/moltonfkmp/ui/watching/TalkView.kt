@@ -42,6 +42,13 @@ private fun talkTypeLinkColor(talkType: TalkType) = when (talkType) {
     TalkType.GRAVE -> MoltonfColors.talkLinkGrave
 }
 
+private fun talkTypeHighlightColors(talkType: TalkType) = when (talkType) {
+    TalkType.PUBLIC -> MoltonfColors.messageHighlightPublic
+    TalkType.WOLF -> MoltonfColors.messageHighlightWolf
+    TalkType.PRIVATE -> MoltonfColors.messageHighlightPrivate
+    TalkType.GRAVE -> MoltonfColors.messageHighlightGrave
+}
+
 /**
  * Renders a single [Talk] (or an [com.hironytic.moltonfkmp.story.Assault] event disguised as a
  * wolf talk by the caller) as a chat-like item, with talk-mention links tappable via [onLinkClick].
@@ -87,6 +94,7 @@ fun TalkView(
                 onLinkClick = { linkKey, segment -> onLinkClick(linkKey, segment.talks) },
                 color = MoltonfColors.onTalk,
                 linkColor = talkTypeLinkColor(talk.talkType),
+                highlightColors = talkTypeHighlightColors(talk.talkType),
                 modifier = Modifier
                     .weight(1f)
                     .background(talkTypeContainerColor(talk.talkType), RoundedCornerShape(8.dp))
