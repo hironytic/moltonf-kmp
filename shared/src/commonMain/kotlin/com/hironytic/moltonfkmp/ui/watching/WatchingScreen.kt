@@ -1,5 +1,6 @@
 package com.hironytic.moltonfkmp.ui.watching
 
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -101,7 +102,20 @@ fun WatchingScreen(
                         NeutralOutlinedButton(
                             onClick = {
                                 val target = if (isNewestDay) minOf(furthestSeenIndex, lastItemIndex) else lastItemIndex
-                                scope.launch { listState.animateScrollToItem(target) }
+                                scope.launch {
+                                    listState.animateScrollToItem(target)
+                                    if (isNewestDay) {
+                                        // Align the bottom of the last-seen item with the bottom of the
+                                        // viewport so that unseen items below it are not shown.
+                                        val info = listState.layoutInfo
+                                        val item = info.visibleItemsInfo.firstOrNull { it.index == target }
+                                        if (item != null) {
+                                            val gap = info.viewportEndOffset - info.afterContentPadding -
+                                                (item.offset + item.size)
+                                            if (gap > 0) listState.animateScrollBy(-gap.toFloat())
+                                        }
+                                    }
+                                }
                             },
                             modifier = Modifier.padding(start = 4.dp, end = 8.dp),
                             text = "末尾",
