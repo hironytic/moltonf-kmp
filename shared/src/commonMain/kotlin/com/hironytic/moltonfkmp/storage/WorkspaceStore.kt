@@ -17,6 +17,7 @@ data class NewWorkspace(
     val dayProgress: Int? = null,
     val playerCharacter: String,
     val lastModified: Instant,
+    val readPosition: Int = 0,
 )
 
 /**
@@ -37,6 +38,7 @@ class WorkspaceStore(
                 storyId = storyId,
                 currentDay = workspace.currentDay.toLong(),
                 dayProgress = workspace.dayProgress?.toLong(),
+                readPosition = workspace.readPosition.toLong(),
                 playerCharacter = workspace.playerCharacter,
                 lastModified = workspace.lastModified,
             )
@@ -46,6 +48,7 @@ class WorkspaceStore(
                 storyId = storyId,
                 currentDay = workspace.currentDay,
                 dayProgress = workspace.dayProgress,
+                readPosition = workspace.readPosition,
                 playerCharacter = workspace.playerCharacter,
                 lastModified = workspace.lastModified,
             )
@@ -58,6 +61,7 @@ class WorkspaceStore(
             storyId = workspace.storyId,
             currentDay = workspace.currentDay.toLong(),
             dayProgress = workspace.dayProgress?.toLong(),
+            readPosition = workspace.readPosition.toLong(),
             playerCharacter = workspace.playerCharacter,
             lastModified = workspace.lastModified,
             id = workspace.id,
@@ -93,6 +97,7 @@ class WorkspaceStore(
         storyId = storyId,
         currentDay = currentDay.toInt(),
         dayProgress = dayProgress?.toInt(),
+        readPosition = readPosition.toInt(),
         playerCharacter = playerCharacter,
         lastModified = lastModified,
     )

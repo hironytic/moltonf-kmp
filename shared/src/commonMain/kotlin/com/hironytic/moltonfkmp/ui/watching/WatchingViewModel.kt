@@ -31,6 +31,7 @@ sealed interface WatchingUiState {
         val talkMap: TalkMap,
         val playerCharacter: String,
         val dayProgress: Int?,
+        val readPosition: Int,
         val watchableDays: List<WatchableDay>,
         val currentDay: Int,
         val canMoveToNextDay: Boolean,
@@ -88,6 +89,7 @@ class WatchingViewModel(
             talkMap = talkMap,
             playerCharacter = workspace.playerCharacter,
             dayProgress = dayProgress,
+            readPosition = workspace.readPosition,
             watchableDays = watchableDays,
             currentDay = currentDay,
             canMoveToNextDay = currentDay < currentStory.periods.size - 1,
@@ -123,8 +125,22 @@ class WatchingViewModel(
             } else {
                 dayProgress
             }
-            it.copy(currentDay = day + 1, dayProgress = nextDayProgress)
+            it.copy(
+                currentDay = day + 1,
+                dayProgress = nextDayProgress,
+                readPosition = if (nextDayProgress != dayProgress) 0 else it.readPosition,
+            )
         }
+    }
+
+    /** Records that the user has seen list items up to [index] on the newest revealed day. */
+    fun updateReadPosition(index: Int) {
+        val dayProgress = workspace.dayProgress ?: return
+        if (workspace.currentDay < dayProgress || index <= workspace.readPosition) return
+        workspace = workspace.copy(readPosition = index)
+        (_uiState.value as? WatchingUiState.Loaded)?.let { _uiState.value = it.copy(readPosition = index) }
+        val saved = workspace
+        viewModelScope.launch { workspaceStore.update(saved) }
     }
 
     private fun nextId(): String = Uuid.random().toString()

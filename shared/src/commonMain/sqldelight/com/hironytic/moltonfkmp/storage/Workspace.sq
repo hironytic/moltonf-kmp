@@ -4,6 +4,7 @@ CREATE TABLE workspaceRecord (
   storyId INTEGER NOT NULL,
   currentDay INTEGER NOT NULL,
   dayProgress INTEGER,
+  readPosition INTEGER NOT NULL DEFAULT 0,
   playerCharacter TEXT NOT NULL,
   lastModified INTEGER AS kotlin.time.Instant NOT NULL
 );
@@ -11,12 +12,12 @@ CREATE TABLE workspaceRecord (
 CREATE INDEX workspaceRecord_lastModified ON workspaceRecord(lastModified);
 
 insertWorkspace:
-INSERT INTO workspaceRecord(id, name, storyId, currentDay, dayProgress, playerCharacter, lastModified)
-VALUES (?, ?, ?, ?, ?, ?, ?);
+INSERT INTO workspaceRecord(id, name, storyId, currentDay, dayProgress, readPosition, playerCharacter, lastModified)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 updateWorkspace:
 UPDATE workspaceRecord
-SET name = ?, storyId = ?, currentDay = ?, dayProgress = ?, playerCharacter = ?, lastModified = ?
+SET name = ?, storyId = ?, currentDay = ?, dayProgress = ?, readPosition = ?, playerCharacter = ?, lastModified = ?
 WHERE id = ?;
 
 deleteWorkspaceById:
