@@ -4,7 +4,7 @@ import com.hironytic.moltonfkmp.story.Talk
 import com.hironytic.moltonfkmp.story.TalkWithDay
 
 /**
- * One node of the expandable tree shown in the talk-thread modal: a single [talk], plus
+ * One node of the expandable tree shown under a talk on the Watching screen: a single [talk], plus
  * whichever of its own talk-mention links the viewer has expanded so far. Each expanded link
  * is keyed by an occurrence key (see [MessageSegment]-derived keys) and holds the entries
  * that were inserted directly below this one when that link was tapped.
@@ -14,24 +14,6 @@ data class TalkThreadEntry(
     val day: Int,
     val talk: Talk,
     val expandedLinks: Map<String, List<TalkThreadEntry>> = emptyMap(),
-)
-
-/**
- * Creates a new root entry for [talk] with [linkKey] already expanded to [targets] — this is
- * how the talk-thread modal opens: the tapped talk plus the talk(s) it links to.
- */
-fun createTalkThreadRoot(
-    id: String,
-    day: Int,
-    talk: Talk,
-    linkKey: String,
-    targets: List<TalkWithDay>,
-    nextId: () -> String,
-): TalkThreadEntry = TalkThreadEntry(
-    id = id,
-    day = day,
-    talk = talk,
-    expandedLinks = mapOf(linkKey to targets.map { TalkThreadEntry(nextId(), it.day, it.talk) }),
 )
 
 /**
@@ -82,3 +64,9 @@ private fun TalkThreadEntry.flattenRec(depth: Int, pathToSelf: List<String>): Li
     }
     return result
 }
+
+/**
+ * Flattens only the expanded descendants of this (root) entry, excluding the root itself, since
+ * the root is already rendered by the Watching screen's normal list.
+ */
+fun TalkThreadEntry.flattenDescendants(): List<FlatTalkThreadEntry> = flatten().drop(1)
