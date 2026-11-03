@@ -35,6 +35,7 @@ class WorkspaceStoreTest {
                 name = "workspace1",
                 currentDay = 1,
                 dayProgress = 1,
+                readPosition = 7,
                 playerCharacter = "gerd",
                 lastModified = Instant.fromEpochMilliseconds(1_000),
             ),
@@ -43,6 +44,7 @@ class WorkspaceStoreTest {
         assertEquals("workspace1", workspace.name)
         assertEquals(1, workspace.currentDay)
         assertEquals(1, workspace.dayProgress)
+        assertEquals(7, workspace.readPosition)
         assertEquals("gerd", workspace.playerCharacter)
         assertEquals(Instant.fromEpochMilliseconds(1_000), workspace.lastModified)
 

@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -69,21 +68,20 @@ fun WatchingScreen(
                 // re-enters composition (e.g. returning from TalkThreadScreen) — otherwise the
                 // scroll position restored by rememberLazyListState would be immediately discarded.
                 var scrolledToTopForDay by rememberSaveable { mutableStateOf(state.currentDay) }
-                LaunchedEffect(state.currentDay) {
+                val isNewestDay = state.dayProgress != null && state.currentDay >= state.dayProgress
+                // On the newest revealed day, the furthest item seen is persisted in the workspace so
+                // that "scroll to bottom" never jumps past what the user has seen (spoiler prevention).
+                val furthestSeenIndex = state.readPosition
+                LaunchedEffect(state.currentDay, isNewestDay) {
                     if (state.currentDay != scrolledToTopForDay) {
                         listState.scrollToItem(0)
                         scrolledToTopForDay = state.currentDay
                     }
-                }
-
-                // On the newest revealed day, remember how far the user has actually scrolled so that
-                // "scroll to bottom" never jumps past what they have already seen (spoiler prevention).
-                val isNewestDay = state.dayProgress != null && state.currentDay >= state.dayProgress
-                var furthestSeenIndex by rememberSaveable(state.currentDay) { mutableIntStateOf(0) }
-                LaunchedEffect(state.currentDay, isNewestDay) {
+                    // Tracking starts only after the reset above so a stale scroll position from the
+                    // previously shown day is never recorded as read.
                     if (!isNewestDay) return@LaunchedEffect
                     snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }
-                        .collect { furthestSeenIndex = maxOf(furthestSeenIndex, it) }
+                        .collect { viewModel.updateReadPosition(it) }
                 }
                 val scope = rememberCoroutineScope()
                 val lastItemIndex = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
