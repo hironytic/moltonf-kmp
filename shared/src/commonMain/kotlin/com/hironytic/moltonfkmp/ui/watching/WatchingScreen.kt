@@ -109,11 +109,13 @@ fun WatchingScreen(
                                     }
                                     // Aim for the bottom of the last-seen item to sit at the bottom of the
                                     // viewport so unseen items below it are not shown. The item's size is
-                                    // only estimated up front (so that a single animation is enough), and
-                                    // any remaining difference is corrected instantly afterwards.
+                                    // only estimated up front (so that a single animation is enough). The
+                                    // estimate is a lower bound (the smallest visible item), so a longer real
+                                    // item just extends below the viewport and is left as is; only in the rare
+                                    // case of a shorter one is the gap closed instantly.
                                     val before = listState.layoutInfo
                                     val visible = before.visibleItemsInfo
-                                    val estimatedSize = if (visible.isEmpty()) 0 else visible.sumOf { it.size } / visible.size
+                                    val estimatedSize = visible.minOfOrNull { it.size } ?: 0
                                     val viewportHeight = before.viewportEndOffset - before.viewportStartOffset -
                                         before.beforeContentPadding - before.afterContentPadding
                                     listState.animateScrollToItem(target, (estimatedSize - viewportHeight).coerceAtMost(0))
@@ -122,7 +124,7 @@ fun WatchingScreen(
                                     if (item != null) {
                                         val gap = info.viewportEndOffset - info.afterContentPadding -
                                             (item.offset + item.size)
-                                        if (gap != 0) listState.scrollBy(-gap.toFloat())
+                                        if (gap > 0) listState.scrollBy(-gap.toFloat())
                                     }
                                 }
                             },
