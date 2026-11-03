@@ -53,8 +53,9 @@ class WatchingViewModel(
     private val _uiState = MutableStateFlow<WatchingUiState>(WatchingUiState.Loading)
     val uiState: StateFlow<WatchingUiState> = _uiState.asStateFlow()
 
-    private val _talkThread = MutableStateFlow<TalkThreadEntry?>(null)
-    val talkThread: StateFlow<TalkThreadEntry?> = _talkThread.asStateFlow()
+    /** Expanded link trees, keyed by "<day>/<elementId>" of the top-level talk they hang under. */
+    private val _expandedThreads = MutableStateFlow<Map<String, TalkThreadEntry>>(emptyMap())
+    val expandedThreads: StateFlow<Map<String, TalkThreadEntry>> = _expandedThreads.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -128,15 +129,15 @@ class WatchingViewModel(
 
     private fun nextId(): String = Uuid.random().toString()
 
-    fun openTalkThread(day: Int, talk: Talk, linkKey: String, targets: List<TalkWithDay>) {
-        _talkThread.value = createTalkThreadRoot(nextId(), day, talk, linkKey, targets, ::nextId)
-    }
-
-    fun toggleThreadLink(path: List<String>, linkKey: String, targets: List<TalkWithDay>) {
-        _talkThread.value = _talkThread.value?.toggleLink(path, linkKey, targets, ::nextId)
-    }
-
-    fun closeTalkThread() {
-        _talkThread.value = null
+    /**
+     * Toggles [linkKey] on the entry reached by [path] below the top-level [talk] of [day]
+     * (an empty [path] means the talk itself), expanding or collapsing the linked talks in place.
+     */
+    fun toggleLink(day: Int, talk: Talk, path: List<String>, linkKey: String, targets: List<TalkWithDay>) {
+        val key = threadKey(day, talk.elementId)
+        val root = _expandedThreads.value[key] ?: TalkThreadEntry(nextId(), day, talk)
+        _expandedThreads.value = _expandedThreads.value + (key to root.toggleLink(path, linkKey, targets, ::nextId))
     }
 }
+
+fun threadKey(day: Int, elementId: String): String = "$day/$elementId"
