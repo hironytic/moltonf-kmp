@@ -26,3 +26,7 @@ The domain is centered on **story archives** for a werewolf-style (人狼) game,
 - `story/CharacterMap.kt` and `story/TalkMap.kt` are derived indexes built once per loaded `Story` (avatar → role/alive-until; talk-number/time → `Talk`), used throughout the watching UI instead of scanning `Story.periods` repeatedly.
 
 UI text is Japanese, written directly in Kotlin (no string resources). `ui/theme/` (`Palette`, `MoltonfColors`, `Theme.kt`, `Components.kt`) defines a dark, Tailwind-gray-based color scheme with red as the accent color — treat these as the source of truth for styling rather than introducing ad hoc colors.
+
+## Language
+
+Use English for source code comments, commit messages, and pull requests (titles and descriptions).
