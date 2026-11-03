@@ -10,9 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,6 +50,7 @@ import kotlinx.coroutines.launch
 private val MIN_TALK_ROW_HEIGHT = 64.dp
 private val MIN_OTHER_ROW_HEIGHT = 40.dp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WatchingScreen(
     viewModel: WatchingViewModel,
@@ -85,17 +90,20 @@ fun WatchingScreen(
                 var scrolledToTopForDay by rememberSaveable { mutableStateOf(state.currentDay) }
                 // Maps list items to the element they belong to (an element's row plus the talk thread
                 // rows expanded beneath it), because readPosition is an element index and does not
-                // change when threads are expanded or collapsed.
+                // change when threads are expanded or collapsed. The owner is the element's index in the
+                // unfiltered list, so readPosition does not depend on the talk filter either.
                 val itemOwners = mutableListOf<Int>()
-                val elementItemIndices = mutableListOf<Int>()
-                state.elements.forEachIndexed { i, element ->
-                    elementItemIndices += itemOwners.size
-                    itemOwners += i
+                // The list item index of each displayed element's row (parallel to state.displayedElements).
+                val displayedItemIndices = mutableListOf<Int>()
+                state.displayedElements.forEach { (index, element) ->
+                    displayedItemIndices += itemOwners.size
+                    itemOwners += index
                     val threadSize = expandedThreads[threadKey(state.currentDay, element.elementId)]
                         ?.flattenDescendants()?.size ?: 0
-                    repeat(threadSize) { itemOwners += i }
+                    repeat(threadSize) { itemOwners += index }
                 }
                 val currentItemOwners by rememberUpdatedState(itemOwners.toList())
+                val currentLastElementIndex by rememberUpdatedState(state.elements.lastIndex)
                 val isNewestDay = state.dayProgress != null && state.currentDay >= state.dayProgress
                 // On the newest revealed day, the furthest item seen is persisted in the workspace so
                 // that "scroll to bottom" never jumps past what the user has seen (spoiler prevention).
@@ -112,10 +120,11 @@ fun WatchingScreen(
                         .collect { itemIndex ->
                             // Items past the owners list (e.g. the "next day" button) mean the whole day was seen.
                             val owners = currentItemOwners
-                            val owner = owners.getOrNull(itemIndex) ?: owners.lastIndex
+                            val owner = owners.getOrNull(itemIndex) ?: currentLastElementIndex
                             if (owner >= 0) viewModel.updateReadPosition(owner)
                         }
                 }
+                var filterExpanded by rememberSaveable { mutableStateOf(false) }
                 val scope = rememberCoroutineScope()
                 val density = LocalDensity.current
                 val lastItemIndex = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
@@ -127,6 +136,12 @@ fun WatchingScreen(
                             currentDay = state.currentDay,
                             onDaySelected = viewModel::changeDay,
                             modifier = Modifier.weight(1f),
+                            trailingContent = {
+                                TalkFilterToggleButton(
+                                    isFilterActive = !state.talkFilter.isDefault,
+                                    onClick = { filterExpanded = !filterExpanded },
+                                )
+                            },
                         )
                         NeutralOutlinedButton(
                             onClick = { scope.launch { listState.animateScrollToItem(0) } },
@@ -134,8 +149,11 @@ fun WatchingScreen(
                         )
                         NeutralOutlinedButton(
                             onClick = {
+                                // readPosition indexes the unfiltered elements; the element it points to may be
+                                // hidden by the talk filter, in which case use the last displayed one before it.
+                                val displayedPos = state.displayedElements.indexOfLast { it.index <= furthestSeenIndex }
                                 val target = if (isNewestDay) {
-                                    elementItemIndices.getOrNull(furthestSeenIndex) ?: lastItemIndex
+                                    displayedItemIndices.getOrNull(displayedPos) ?: lastItemIndex
                                 } else {
                                     lastItemIndex
                                 }
@@ -144,12 +162,16 @@ fun WatchingScreen(
                                         listState.animateScrollToItem(target)
                                         return@launch
                                     }
+                                    if (displayedPos < 0) {
+                                        listState.animateScrollToItem(0)
+                                        return@launch
+                                    }
                                     // Scroll so that only the top part of the last-seen element is shown, with
                                     // a fixed length that is no longer than any element (so nothing unseen
                                     // below it can appear). Unlike aligning its bottom to the viewport's,
                                     // this needs no knowledge of the element's real height.
                                     val revealPx = with(density) {
-                                        val element = state.elements.getOrNull(furthestSeenIndex)
+                                        val element = state.displayedElements.getOrNull(displayedPos)?.element
                                         val storyElement = (element as? WatchingElement.Element)?.storyElement
                                         val isTalkLike = storyElement is Talk || storyElement is Assault
                                         (if (isTalkLike) MIN_TALK_ROW_HEIGHT else MIN_OTHER_ROW_HEIGHT).toPx().toInt()
@@ -172,7 +194,7 @@ fun WatchingScreen(
                         )
                     }
                     LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth()) {
-                        state.elements.forEach { element ->
+                        state.displayedElements.forEach { (_, element) ->
                             item(key = element.elementId) {
                                 WatchingElementRow(
                                     element = element,
@@ -217,6 +239,19 @@ fun WatchingScreen(
                                     Text("次の日へ")
                                 }
                             }
+                        }
+                    }
+                    if (filterExpanded) {
+                        ModalBottomSheet(onDismissRequest = { filterExpanded = false }) {
+                            TalkFilterPanel(
+                                avatars = state.story.avatarList,
+                                filter = state.talkFilter,
+                                onToggleAvatar = viewModel::toggleAvatarFilter,
+                                onToggleTalkType = viewModel::toggleTalkTypeFilter,
+                                onCheckAllAvatars = viewModel::checkAllAvatars,
+                                onUncheckAllAvatars = viewModel::uncheckAllAvatars,
+                                modifier = Modifier.verticalScroll(rememberScrollState()),
+                            )
                         }
                     }
                 }

@@ -8,6 +8,7 @@ import com.hironytic.moltonfkmp.story.PeriodType
 import com.hironytic.moltonfkmp.story.Story
 import com.hironytic.moltonfkmp.story.Talk
 import com.hironytic.moltonfkmp.story.TalkMap
+import com.hironytic.moltonfkmp.story.TalkType
 import com.hironytic.moltonfkmp.story.TalkWithDay
 import com.hironytic.moltonfkmp.story.createCharacterMap
 import com.hironytic.moltonfkmp.story.createTalkMap
@@ -35,7 +36,11 @@ sealed interface WatchingUiState {
         val watchableDays: List<WatchableDay>,
         val currentDay: Int,
         val canMoveToNextDay: Boolean,
+        /** All elements of the current day, ignoring the talk filter. */
         val elements: List<WatchingElement>,
+        /** The elements to display after applying [talkFilter], each with its index in [elements]. */
+        val displayedElements: List<IndexedElement>,
+        val talkFilter: TalkFilter,
     ) : WatchingUiState
 }
 
@@ -50,6 +55,8 @@ class WatchingViewModel(
     private var story: Story? = null
     private var characterMap: CharacterMap = emptyMap()
     private var talkMap: TalkMap = nullTalkMap()
+
+    private var talkFilter = TalkFilter()
 
     private val _uiState = MutableStateFlow<WatchingUiState>(WatchingUiState.Loading)
     val uiState: StateFlow<WatchingUiState> = _uiState.asStateFlow()
@@ -83,6 +90,7 @@ class WatchingViewModel(
             WatchableDay(day, text)
         }
         val currentDay = workspace.currentDay
+        val elements = currentElements(currentStory, characterMap, workspace.playerCharacter, dayProgress, currentDay)
         _uiState.value = WatchingUiState.Loaded(
             story = currentStory,
             characterMap = characterMap,
@@ -93,7 +101,9 @@ class WatchingViewModel(
             watchableDays = watchableDays,
             currentDay = currentDay,
             canMoveToNextDay = currentDay < currentStory.periods.size - 1,
-            elements = currentElements(currentStory, characterMap, workspace.playerCharacter, dayProgress, currentDay),
+            elements = elements,
+            displayedElements = applyTalkFilter(elements, talkFilter),
+            talkFilter = talkFilter,
         )
     }
 
@@ -141,6 +151,27 @@ class WatchingViewModel(
         (_uiState.value as? WatchingUiState.Loaded)?.let { _uiState.value = it.copy(readPosition = index) }
         val saved = workspace
         viewModelScope.launch { workspaceStore.update(saved) }
+    }
+
+    private fun updateTalkFilter(update: (TalkFilter) -> TalkFilter) {
+        talkFilter = update(talkFilter)
+        publishState()
+    }
+
+    fun toggleAvatarFilter(avatarId: String) = updateTalkFilter {
+        val hidden = it.hiddenAvatarIds
+        it.copy(hiddenAvatarIds = if (avatarId in hidden) hidden - avatarId else hidden + avatarId)
+    }
+
+    fun toggleTalkTypeFilter(talkType: TalkType) = updateTalkFilter {
+        val hidden = it.hiddenTalkTypes
+        it.copy(hiddenTalkTypes = if (talkType in hidden) hidden - talkType else hidden + talkType)
+    }
+
+    fun checkAllAvatars() = updateTalkFilter { it.copy(hiddenAvatarIds = emptySet()) }
+
+    fun uncheckAllAvatars() = updateTalkFilter {
+        it.copy(hiddenAvatarIds = story?.avatarList?.map { avatar -> avatar.avatarId }?.toSet() ?: emptySet())
     }
 
     private fun nextId(): String = Uuid.random().toString()
