@@ -2,7 +2,6 @@ package com.hironytic.moltonfkmp.ui.watching
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.animateScrollBy
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,12 +27,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import com.hironytic.moltonfkmp.story.Assault
+import com.hironytic.moltonfkmp.story.Talk
 import com.hironytic.moltonfkmp.story.TalkWithDay
 import com.hironytic.moltonfkmp.ui.theme.MoltonfColors
 import com.hironytic.moltonfkmp.ui.theme.MoltonfTopAppBar
 import com.hironytic.moltonfkmp.ui.theme.NeutralOutlinedButton
 import kotlinx.coroutines.launch
+
+/**
+ * Lower bounds of the height of a list row, used by the "scroll to bottom" button.
+ * A talk row has at least a name line, the 40dp avatar icon and the row's own vertical padding
+ * (the name line is about 16dp at the default font size; kept a little below the real value).
+ * Other rows (events, synthesized messages) are just a bordered text.
+ */
+private val MIN_TALK_ROW_HEIGHT = 64.dp
+private val MIN_OTHER_ROW_HEIGHT = 40.dp
 
 @Composable
 fun WatchingScreen(
@@ -106,6 +117,7 @@ fun WatchingScreen(
                         }
                 }
                 val scope = rememberCoroutineScope()
+                val density = LocalDensity.current
                 val lastItemIndex = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
 
                 Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
@@ -132,32 +144,26 @@ fun WatchingScreen(
                                         listState.animateScrollToItem(target)
                                         return@launch
                                     }
-                                    // Aim for the bottom of the last-seen item to sit at the bottom of the
-                                    // viewport so unseen items below it are not shown. The item's size is
-                                    // only estimated up front (so that a single animation is enough). The
-                                    // estimate is a lower bound (the smallest visible item), so a longer real
-                                    // item just extends below the viewport and is left as is; only in the rare
-                                    // case of a shorter one is the gap closed instantly.
-                                    val before = listState.layoutInfo
-                                    // The last-seen item is already on screen: never scroll backwards. Only
-                                    // reveal the rest of it if its bottom is cut off (its real size is known).
-                                    before.visibleItemsInfo.firstOrNull { it.index == target }?.let { item ->
-                                        val cutOff = item.offset + item.size -
-                                            (before.viewportEndOffset - before.afterContentPadding)
-                                        if (cutOff > 0) listState.animateScrollBy(cutOff.toFloat())
-                                        return@launch
+                                    // Scroll so that only the top part of the last-seen element is shown, with
+                                    // a fixed length that is no longer than any element (so nothing unseen
+                                    // below it can appear). Unlike aligning its bottom to the viewport's,
+                                    // this needs no knowledge of the element's real height.
+                                    val revealPx = with(density) {
+                                        val element = state.elements.getOrNull(furthestSeenIndex)
+                                        val storyElement = (element as? WatchingElement.Element)?.storyElement
+                                        val isTalkLike = storyElement is Talk || storyElement is Assault
+                                        (if (isTalkLike) MIN_TALK_ROW_HEIGHT else MIN_OTHER_ROW_HEIGHT).toPx().toInt()
                                     }
-                                    val visible = before.visibleItemsInfo
-                                    val estimatedSize = visible.minOfOrNull { it.size } ?: 0
-                                    val viewportHeight = before.viewportEndOffset - before.viewportStartOffset -
-                                        before.beforeContentPadding - before.afterContentPadding
-                                    listState.animateScrollToItem(target, (estimatedSize - viewportHeight).coerceAtMost(0))
                                     val info = listState.layoutInfo
+                                    val viewportEnd = info.viewportEndOffset - info.afterContentPadding
                                     val item = info.visibleItemsInfo.firstOrNull { it.index == target }
                                     if (item != null) {
-                                        val gap = info.viewportEndOffset - info.afterContentPadding -
-                                            (item.offset + item.size)
-                                        if (gap > 0) listState.scrollBy(-gap.toFloat())
+                                        // Already on screen: only move forward, and only if needed.
+                                        val cutOff = item.offset + revealPx - viewportEnd
+                                        if (cutOff > 0) listState.animateScrollBy(cutOff.toFloat())
+                                    } else {
+                                        val viewportHeight = viewportEnd - info.viewportStartOffset - info.beforeContentPadding
+                                        listState.animateScrollToItem(target, (revealPx - viewportHeight).coerceAtMost(0))
                                     }
                                 }
                             },
