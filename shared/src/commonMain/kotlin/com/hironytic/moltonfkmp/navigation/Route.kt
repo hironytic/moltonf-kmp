@@ -16,8 +16,4 @@ sealed interface Route {
     /** Start destination of the [Watching] graph: the day-by-day log view. */
     @Serializable
     data object WatchingHome : Route
-
-    /** Full-screen destination of the [Watching] graph: the talk thread opened from a link tap. */
-    @Serializable
-    data object TalkThread : Route
 }

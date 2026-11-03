@@ -16,7 +16,6 @@ import com.hironytic.moltonfkmp.navigation.Route
 import com.hironytic.moltonfkmp.ui.newworkspace.NewWorkspaceScreen
 import com.hironytic.moltonfkmp.ui.selectworkspace.SelectWorkspaceScreen
 import com.hironytic.moltonfkmp.ui.theme.MoltonfTheme
-import com.hironytic.moltonfkmp.ui.watching.TalkThreadScreen
 import com.hironytic.moltonfkmp.ui.watching.WatchingScreen
 import com.hironytic.moltonfkmp.ui.watching.WatchingViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -56,14 +55,6 @@ fun App() {
                     WatchingScreen(
                         viewModel = viewModel,
                         onBack = { navController.popBackStack() },
-                        onOpenTalkThread = { navController.navigate(Route.TalkThread) },
-                    )
-                }
-                composable<Route.TalkThread> { backStackEntry ->
-                    val viewModel = watchingViewModel(navController, backStackEntry)
-                    TalkThreadScreen(
-                        viewModel = viewModel,
-                        onClose = { navController.popBackStack() },
                     )
                 }
             }
@@ -72,9 +63,7 @@ fun App() {
 }
 
 /**
- * Resolves the [WatchingViewModel] scoped to the enclosing `Route.Watching` graph, so the
- * WatchingHome and TalkThread screens share the same instance (and therefore the same loaded
- * story and talk-thread state).
+ * Resolves the [WatchingViewModel] scoped to the enclosing `Route.Watching` graph.
  */
 @Composable
 private fun watchingViewModel(

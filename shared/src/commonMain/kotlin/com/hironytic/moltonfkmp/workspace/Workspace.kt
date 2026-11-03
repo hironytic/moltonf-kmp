@@ -10,7 +10,7 @@ data class Workspace(
     val storyId: Long,
     val currentDay: Int,
     val dayProgress: Int? = null,
-    /** Index of the furthest list item seen on the day `dayProgress`; meaningless for other days. */
+    /** Index (in the day's elements) of the furthest element seen on the day `dayProgress`; meaningless for other days. */
     val readPosition: Int = 0,
     val playerCharacter: String,
     val lastModified: Instant,

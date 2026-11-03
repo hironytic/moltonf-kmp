@@ -1,5 +1,6 @@
 package com.hironytic.moltonfkmp.ui.watching
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
@@ -9,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -22,6 +22,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -29,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hironytic.moltonfkmp.story.TalkWithDay
+import com.hironytic.moltonfkmp.ui.theme.MoltonfColors
 import com.hironytic.moltonfkmp.ui.theme.MoltonfTopAppBar
 import com.hironytic.moltonfkmp.ui.theme.NeutralOutlinedButton
 import kotlinx.coroutines.launch
@@ -37,9 +39,9 @@ import kotlinx.coroutines.launch
 fun WatchingScreen(
     viewModel: WatchingViewModel,
     onBack: () -> Unit,
-    onOpenTalkThread: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val expandedThreads by viewModel.expandedThreads.collectAsState()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
@@ -67,9 +69,22 @@ fun WatchingScreen(
                 }
                 val listState = rememberLazyListState()
                 // Reset to top only when the day actually changes, not merely when this screen
-                // re-enters composition (e.g. returning from TalkThreadScreen) — otherwise the
+                // re-enters composition — otherwise the
                 // scroll position restored by rememberLazyListState would be immediately discarded.
                 var scrolledToTopForDay by rememberSaveable { mutableStateOf(state.currentDay) }
+                // Maps list items to the element they belong to (an element's row plus the talk thread
+                // rows expanded beneath it), because readPosition is an element index and does not
+                // change when threads are expanded or collapsed.
+                val itemOwners = mutableListOf<Int>()
+                val elementItemIndices = mutableListOf<Int>()
+                state.elements.forEachIndexed { i, element ->
+                    elementItemIndices += itemOwners.size
+                    itemOwners += i
+                    val threadSize = expandedThreads[threadKey(state.currentDay, element.elementId)]
+                        ?.flattenDescendants()?.size ?: 0
+                    repeat(threadSize) { itemOwners += i }
+                }
+                val currentItemOwners by rememberUpdatedState(itemOwners.toList())
                 val isNewestDay = state.dayProgress != null && state.currentDay >= state.dayProgress
                 // On the newest revealed day, the furthest item seen is persisted in the workspace so
                 // that "scroll to bottom" never jumps past what the user has seen (spoiler prevention).
@@ -83,7 +98,12 @@ fun WatchingScreen(
                     // previously shown day is never recorded as read.
                     if (!isNewestDay) return@LaunchedEffect
                     snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }
-                        .collect { viewModel.updateReadPosition(it) }
+                        .collect { itemIndex ->
+                            // Items past the owners list (e.g. the "next day" button) mean the whole day was seen.
+                            val owners = currentItemOwners
+                            val owner = owners.getOrNull(itemIndex) ?: owners.lastIndex
+                            if (owner >= 0) viewModel.updateReadPosition(owner)
+                        }
                 }
                 val scope = rememberCoroutineScope()
                 val lastItemIndex = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
@@ -102,7 +122,11 @@ fun WatchingScreen(
                         )
                         NeutralOutlinedButton(
                             onClick = {
-                                val target = if (isNewestDay) minOf(furthestSeenIndex, lastItemIndex) else lastItemIndex
+                                val target = if (isNewestDay) {
+                                    elementItemIndices.getOrNull(furthestSeenIndex) ?: lastItemIndex
+                                } else {
+                                    lastItemIndex
+                                }
                                 scope.launch {
                                     if (!isNewestDay) {
                                         listState.animateScrollToItem(target)
@@ -142,20 +166,41 @@ fun WatchingScreen(
                         )
                     }
                     LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth()) {
-                        items(state.elements, key = { it.elementId }) { element ->
-                            WatchingElementRow(
-                                element = element,
-                                day = state.currentDay,
-                                story = state.story,
-                                characterMap = state.characterMap,
-                                talkMap = state.talkMap,
-                                isTalkVisible = isVisible,
-                                onLinkClick = { talk, linkKey, targets ->
-                                    viewModel.openTalkThread(state.currentDay, talk, linkKey, targets)
-                                    onOpenTalkThread()
-                                },
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
-                            )
+                        state.elements.forEach { element ->
+                            item(key = element.elementId) {
+                                WatchingElementRow(
+                                    element = element,
+                                    day = state.currentDay,
+                                    story = state.story,
+                                    characterMap = state.characterMap,
+                                    talkMap = state.talkMap,
+                                    isTalkVisible = isVisible,
+                                    onLinkClick = { talk, linkKey, targets ->
+                                        viewModel.toggleLink(state.currentDay, talk, emptyList(), linkKey, targets)
+                                    },
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
+                                )
+                            }
+                            val thread = expandedThreads[threadKey(state.currentDay, element.elementId)]
+                            if (thread != null) thread.flattenDescendants().forEach { flat ->
+                                item(key = flat.entry.id) {
+                                    TalkView(
+                                        talk = flat.entry.talk,
+                                        day = flat.entry.day,
+                                        story = state.story,
+                                        characterMap = state.characterMap,
+                                        talkMap = state.talkMap,
+                                        isTalkVisible = isVisible,
+                                        onLinkClick = { linkKey, targets ->
+                                            viewModel.toggleLink(state.currentDay, thread.talk, flat.path, linkKey, targets)
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(MoltonfColors.linkedTalkBackground)
+                                            .padding(start = (8 + flat.depth * 16).dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+                                    )
+                                }
+                            }
                         }
                         if (state.canMoveToNextDay) {
                             item {

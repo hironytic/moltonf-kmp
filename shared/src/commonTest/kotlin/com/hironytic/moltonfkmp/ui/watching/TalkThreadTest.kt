@@ -22,6 +22,23 @@ private class SequentialIds {
     fun nextId(): String = "id${next++}"
 }
 
+/** Test helper: creates a new root entry for [talk] with [linkKey] already expanded to [targets] — this is
+ * how the talk-thread modal opens: the tapped talk plus the talk(s) it links to.
+ */
+fun createTalkThreadRoot(
+    id: String,
+    day: Int,
+    talk: Talk,
+    linkKey: String,
+    targets: List<TalkWithDay>,
+    nextId: () -> String,
+): TalkThreadEntry = TalkThreadEntry(
+    id = id,
+    day = day,
+    talk = talk,
+    expandedLinks = mapOf(linkKey to targets.map { TalkThreadEntry(nextId(), it.day, it.talk) }),
+)
+
 class TalkThreadTest {
     @Test
     fun createTalkThreadRoot_startsWithTheLinkAlreadyExpanded() {
