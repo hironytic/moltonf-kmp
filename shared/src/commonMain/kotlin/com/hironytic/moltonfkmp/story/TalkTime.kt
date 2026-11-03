@@ -11,10 +11,10 @@ fun hourPartOf(time: Int): Int = time / 3_600_000
 fun minutePartOf(time: Int): Int = (time / 60_000) % 60
 
 /**
- * Formats a [Talk.time] value (milliseconds since midnight) as "HH:MM".
+ * Formats a [Talk.time] value (milliseconds since midnight) on the given [day] as "{day}dHH:MM".
  */
-fun timeString(time: Int): String {
+fun timeString(day: Int, time: Int): String {
     val hour = hourPartOf(time).toString().padStart(2, '0')
     val minute = minutePartOf(time).toString().padStart(2, '0')
-    return "$hour:$minute"
+    return "${day}d$hour:$minute"
 }

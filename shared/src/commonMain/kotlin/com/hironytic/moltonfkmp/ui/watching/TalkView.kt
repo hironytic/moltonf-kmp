@@ -80,7 +80,7 @@ fun TalkView(
             }
             Text(avatar?.fullName ?: talk.xname, color = MoltonfColors.avatarName, style = MaterialTheme.typography.labelMedium)
             Spacer(Modifier.width(4.dp))
-            Text(timeString(talk.time), color = MoltonfColors.talkTime, style = MaterialTheme.typography.labelSmall)
+            Text(timeString(day, talk.time), color = MoltonfColors.talkTime, style = MaterialTheme.typography.labelSmall)
         }
         Row(modifier = Modifier.padding(top = 4.dp), verticalAlignment = Alignment.Top) {
             FaceIconImage(
