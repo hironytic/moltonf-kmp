@@ -42,18 +42,8 @@ fun TalkFilterPanel(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)) {
-        Text("発言の種別")
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            filterableTalkTypes.forEach { (type, label) ->
-                MoltonfFilterChip(
-                    selected = type !in filter.hiddenTalkTypes,
-                    onClick = { onToggleTalkType(type) },
-                    label = label,
-                )
-            }
-        }
         Row(
-            modifier = Modifier.padding(vertical = 8.dp),
+            modifier = Modifier.padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -67,6 +57,16 @@ fun TalkFilterPanel(
                     selected = avatar.avatarId !in filter.hiddenAvatarIds,
                     onClick = { onToggleAvatar(avatar.avatarId) },
                     label = avatar.shortName,
+                )
+            }
+        }
+        Text("発言の種別", modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            filterableTalkTypes.forEach { (type, label) ->
+                MoltonfFilterChip(
+                    selected = type !in filter.hiddenTalkTypes,
+                    onClick = { onToggleTalkType(type) },
+                    label = label,
                 )
             }
         }
