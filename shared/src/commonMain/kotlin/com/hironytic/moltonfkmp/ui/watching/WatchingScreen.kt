@@ -1,5 +1,6 @@
 package com.hironytic.moltonfkmp.ui.watching
 
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -114,6 +115,14 @@ fun WatchingScreen(
                                     // item just extends below the viewport and is left as is; only in the rare
                                     // case of a shorter one is the gap closed instantly.
                                     val before = listState.layoutInfo
+                                    // The last-seen item is already on screen: never scroll backwards. Only
+                                    // reveal the rest of it if its bottom is cut off (its real size is known).
+                                    before.visibleItemsInfo.firstOrNull { it.index == target }?.let { item ->
+                                        val cutOff = item.offset + item.size -
+                                            (before.viewportEndOffset - before.afterContentPadding)
+                                        if (cutOff > 0) listState.animateScrollBy(cutOff.toFloat())
+                                        return@launch
+                                    }
                                     val visible = before.visibleItemsInfo
                                     val estimatedSize = visible.minOfOrNull { it.size } ?: 0
                                     val viewportHeight = before.viewportEndOffset - before.viewportStartOffset -
