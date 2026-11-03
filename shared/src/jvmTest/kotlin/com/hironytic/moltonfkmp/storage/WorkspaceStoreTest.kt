@@ -100,3 +100,37 @@ class WorkspaceStoreTest {
         assertNull(store.getStory(workspace.storyId))
     }
 }
+
+class DatabaseMigrationTest {
+    @Test
+    fun migratesLegacyDatabaseWithoutUserVersion() {
+        val file = kotlin.io.path.createTempFile("moltonf-migration", ".db").toFile()
+        try {
+            val url = "jdbc:sqlite:${file.absolutePath}"
+            // Version 1 schema (before readPosition existed), with no user_version set.
+            val legacy = JdbcSqliteDriver(url)
+            legacy.execute(
+                null,
+                "CREATE TABLE storyRecord (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, json TEXT NOT NULL)",
+                0,
+            )
+            legacy.execute(
+                null,
+                "CREATE TABLE workspaceRecord (id TEXT NOT NULL PRIMARY KEY, name TEXT NOT NULL, " +
+                    "storyId INTEGER NOT NULL, currentDay INTEGER NOT NULL, dayProgress INTEGER, " +
+                    "playerCharacter TEXT NOT NULL, lastModified INTEGER NOT NULL)",
+                0,
+            )
+            legacy.execute(null, "INSERT INTO workspaceRecord VALUES ('w1', 'n', 1, 2, 2, 'gerd', 1000)", 0)
+            legacy.close()
+
+            val driver = DatabaseDriverFactory(jdbcUrl = url, isNewDatabase = false).createDriver()
+            val workspace = runBlocking { WorkspaceStore(createMoltonfDatabase(driver)).getWorkspace("w1") }
+            assertEquals(0, workspace?.readPosition)
+            assertEquals(2, workspace?.dayProgress)
+            driver.close()
+        } finally {
+            file.delete()
+        }
+    }
+}

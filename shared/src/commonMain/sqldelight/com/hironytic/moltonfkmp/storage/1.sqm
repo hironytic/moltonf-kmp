@@ -1,0 +1,2 @@
+-- Version 1 -> 2: track the reading position in a workspace.
+ALTER TABLE workspaceRecord ADD COLUMN readPosition INTEGER NOT NULL DEFAULT 0;
