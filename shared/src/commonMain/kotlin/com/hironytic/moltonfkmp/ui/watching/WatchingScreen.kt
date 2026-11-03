@@ -1,6 +1,6 @@
 package com.hironytic.moltonfkmp.ui.watching
 
-import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -103,17 +103,26 @@ fun WatchingScreen(
                             onClick = {
                                 val target = if (isNewestDay) minOf(furthestSeenIndex, lastItemIndex) else lastItemIndex
                                 scope.launch {
-                                    listState.animateScrollToItem(target)
-                                    if (isNewestDay) {
-                                        // Align the bottom of the last-seen item with the bottom of the
-                                        // viewport so that unseen items below it are not shown.
-                                        val info = listState.layoutInfo
-                                        val item = info.visibleItemsInfo.firstOrNull { it.index == target }
-                                        if (item != null) {
-                                            val gap = info.viewportEndOffset - info.afterContentPadding -
-                                                (item.offset + item.size)
-                                            if (gap > 0) listState.animateScrollBy(-gap.toFloat())
-                                        }
+                                    if (!isNewestDay) {
+                                        listState.animateScrollToItem(target)
+                                        return@launch
+                                    }
+                                    // Aim for the bottom of the last-seen item to sit at the bottom of the
+                                    // viewport so unseen items below it are not shown. The item's size is
+                                    // only estimated up front (so that a single animation is enough), and
+                                    // any remaining difference is corrected instantly afterwards.
+                                    val before = listState.layoutInfo
+                                    val visible = before.visibleItemsInfo
+                                    val estimatedSize = if (visible.isEmpty()) 0 else visible.sumOf { it.size } / visible.size
+                                    val viewportHeight = before.viewportEndOffset - before.viewportStartOffset -
+                                        before.beforeContentPadding - before.afterContentPadding
+                                    listState.animateScrollToItem(target, (estimatedSize - viewportHeight).coerceAtMost(0))
+                                    val info = listState.layoutInfo
+                                    val item = info.visibleItemsInfo.firstOrNull { it.index == target }
+                                    if (item != null) {
+                                        val gap = info.viewportEndOffset - info.afterContentPadding -
+                                            (item.offset + item.size)
+                                        if (gap != 0) listState.scrollBy(-gap.toFloat())
                                     }
                                 }
                             },
