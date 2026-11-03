@@ -50,6 +50,12 @@ object MoltonfColors {
     val talkPrivate = Color(0xFF939393)
     val talkGrave = Color(0xFF9FB7CF)
 
+    /**
+     * Background behind a talk that was pulled in by expanding a link. Brighter than the black
+     * screen background but darker than every talk balloon, so the balloons keep their contrast.
+     */
+    val linkedTalkBackground = Palette.Gray800
+
     /** Text color on a talk balloon. */
     val onTalk = Color(0xFF000000)
 

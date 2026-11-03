@@ -1,5 +1,6 @@
 package com.hironytic.moltonfkmp.ui.watching
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hironytic.moltonfkmp.story.TalkWithDay
+import com.hironytic.moltonfkmp.ui.theme.MoltonfColors
 import com.hironytic.moltonfkmp.ui.theme.MoltonfTopAppBar
 import com.hironytic.moltonfkmp.ui.theme.NeutralOutlinedButton
 
@@ -107,6 +109,7 @@ fun WatchingScreen(
                                         },
                                         modifier = Modifier
                                             .fillMaxWidth()
+                                            .background(MoltonfColors.linkedTalkBackground)
                                             .padding(start = (8 + flat.depth * 16).dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
                                     )
                                 }
