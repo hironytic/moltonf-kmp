@@ -13,5 +13,7 @@ data class Workspace(
     /** Index (in the day's elements) of the furthest element seen on the day `dayProgress`; meaningless for other days. */
     val readPosition: Int = 0,
     val playerCharacter: String,
+    val bookmarks: List<Bookmark> = emptyList(),
+    val memo: String = "",
     val lastModified: Instant,
 )

@@ -13,6 +13,7 @@ import com.hironytic.moltonfkmp.story.TalkWithDay
 import com.hironytic.moltonfkmp.story.createCharacterMap
 import com.hironytic.moltonfkmp.story.createTalkMap
 import com.hironytic.moltonfkmp.story.nullTalkMap
+import com.hironytic.moltonfkmp.workspace.Bookmark
 import com.hironytic.moltonfkmp.workspace.Workspace
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
@@ -20,6 +21,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+enum class WatchingTab { TALK, BOOKMARK, CONSIDERATION }
 
 data class WatchableDay(val day: Int, val text: String)
 
@@ -41,6 +46,14 @@ sealed interface WatchingUiState {
         /** The elements to display after applying [talkFilter], each with its index in [elements]. */
         val displayedElements: List<IndexedElement>,
         val talkFilter: TalkFilter,
+        val selectedTab: WatchingTab,
+        /** Element to scroll to on the talk tab; cleared by [WatchingViewModel.consumeScrollTarget]. */
+        val scrollTargetElementId: String?,
+        /** Bookmark to scroll to on the bookmark tab; cleared by [WatchingViewModel.consumeBookmarkScrollTarget]. */
+        val scrollTargetBookmarkId: String?,
+        val bookmarkItems: List<BookmarkItem>,
+        /** Element IDs of the bookmarked talks on [currentDay]. */
+        val bookmarkedElementIds: Set<String>,
     ) : WatchingUiState
 }
 
@@ -57,6 +70,10 @@ class WatchingViewModel(
     private var talkMap: TalkMap = nullTalkMap()
 
     private var talkFilter = TalkFilter()
+    private var selectedTab = WatchingTab.TALK
+    private var scrollTargetElementId: String? = null
+    private var scrollTargetBookmarkId: String? = null
+    private val saveMutex = Mutex()
 
     private val _uiState = MutableStateFlow<WatchingUiState>(WatchingUiState.Loading)
     val uiState: StateFlow<WatchingUiState> = _uiState.asStateFlow()
@@ -104,15 +121,95 @@ class WatchingViewModel(
             elements = elements,
             displayedElements = applyTalkFilter(elements, talkFilter),
             talkFilter = talkFilter,
+            selectedTab = selectedTab,
+            scrollTargetElementId = scrollTargetElementId,
+            scrollTargetBookmarkId = scrollTargetBookmarkId,
+            bookmarkItems = resolveBookmarks(currentStory, workspace.bookmarks),
+            bookmarkedElementIds = workspace.bookmarks.filter { it.day == currentDay }.map { it.elementId }.toSet(),
         )
     }
 
     private fun updateWorkspace(update: (Workspace) -> Workspace) {
         workspace = update(workspace).copy(lastModified = Clock.System.now())
         publishState()
+        persistWorkspace()
+    }
+
+    /** Saves the latest workspace; the mutex keeps writes ordered so the last one wins. */
+    private fun persistWorkspace() {
         viewModelScope.launch {
-            workspaceStore.update(workspace)
+            saveMutex.withLock { workspaceStore.update(workspace) }
         }
+    }
+
+    fun selectTab(tab: WatchingTab) {
+        if (tab == selectedTab) return
+        selectedTab = tab
+        publishState()
+    }
+
+    /**
+     * Switches to the talk tab, shows the day of [bookmark] and requests scrolling to its talk.
+     * The talk filter is reset so that the talk is not hidden by it.
+     */
+    fun jumpToBookmark(bookmark: Bookmark) {
+        val currentStory = story ?: return
+        val dayProgress = workspace.dayProgress
+        val maxDay = if (dayProgress != null) minOf(dayProgress, currentStory.periods.size - 1) else currentStory.periods.size - 1
+        if (bookmark.day > maxDay) return
+        selectedTab = WatchingTab.TALK
+        scrollTargetElementId = bookmark.elementId
+        talkFilter = TalkFilter()
+        if (bookmark.day != workspace.currentDay) {
+            updateWorkspace { it.copy(currentDay = bookmark.day) }
+        } else {
+            publishState()
+        }
+    }
+
+    fun consumeScrollTarget() {
+        if (scrollTargetElementId == null) return
+        scrollTargetElementId = null
+        publishState()
+    }
+
+    /** Switches to the bookmark tab and requests scrolling to the bookmark. */
+    fun showBookmark(bookmarkId: String) {
+        selectedTab = WatchingTab.BOOKMARK
+        scrollTargetBookmarkId = bookmarkId
+        publishState()
+    }
+
+    fun consumeBookmarkScrollTarget() {
+        if (scrollTargetBookmarkId == null) return
+        scrollTargetBookmarkId = null
+        publishState()
+    }
+
+    /** Adds a bookmark on the talk, or updates the comment of the existing one. */
+    fun saveBookmark(day: Int, elementId: String, comment: String) {
+        updateWorkspace { ws ->
+            val existing = ws.bookmarks.firstOrNull { it.day == day && it.elementId == elementId }
+            val bookmarks = if (existing != null) {
+                ws.bookmarks.map { if (it.id == existing.id) it.copy(comment = comment) else it }
+            } else {
+                ws.bookmarks + Bookmark(id = nextId(), day = day, elementId = elementId, comment = comment)
+            }
+            ws.copy(bookmarks = bookmarks)
+        }
+    }
+
+    fun removeBookmark(bookmarkId: String) {
+        updateWorkspace { ws -> ws.copy(bookmarks = ws.bookmarks.filterNot { it.id == bookmarkId }) }
+    }
+
+    val memo: String get() = workspace.memo
+
+    /** Saves the consideration memo. Not published to [uiState], so typing does not recompute the screen. */
+    fun updateMemo(memo: String) {
+        if (memo == workspace.memo) return
+        workspace = workspace.copy(memo = memo, lastModified = Clock.System.now())
+        persistWorkspace()
     }
 
     fun changeDay(day: Int) {
@@ -149,8 +246,7 @@ class WatchingViewModel(
         if (workspace.currentDay < dayProgress || index <= workspace.readPosition) return
         workspace = workspace.copy(readPosition = index)
         (_uiState.value as? WatchingUiState.Loaded)?.let { _uiState.value = it.copy(readPosition = index) }
-        val saved = workspace
-        viewModelScope.launch { workspaceStore.update(saved) }
+        persistWorkspace()
     }
 
     private fun updateTalkFilter(update: (TalkFilter) -> TalkFilter) {

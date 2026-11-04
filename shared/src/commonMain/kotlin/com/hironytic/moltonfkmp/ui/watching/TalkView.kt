@@ -1,6 +1,7 @@
 package com.hironytic.moltonfkmp.ui.watching
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -63,6 +64,8 @@ fun TalkView(
     isTalkVisible: (TalkWithDay) -> Boolean,
     onLinkClick: (linkKey: String, targets: List<TalkWithDay>) -> Unit,
     modifier: Modifier = Modifier,
+    isBookmarked: Boolean = false,
+    onBookmarkClick: (() -> Unit)? = null,
 ) {
     val avatar = characterMap[talk.avatarId]?.avatar
     val faceIcon = if (talk.talkType == TalkType.GRAVE) {
@@ -73,7 +76,7 @@ fun TalkView(
     val lines = talk.messageLines.map { line -> parseMessageSegments(line, day, talkMap, isTalkVisible) }
 
     Column(modifier = modifier.fillMaxWidth()) {
-        Row {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             if (talk.talkNo != null) {
                 Text("${talk.talkNo}.", color = MoltonfColors.talkTime, style = MaterialTheme.typography.labelSmall)
                 Spacer(Modifier.width(4.dp))
@@ -81,6 +84,15 @@ fun TalkView(
             Text(avatar?.fullName ?: talk.xname, color = MoltonfColors.avatarName, style = MaterialTheme.typography.labelMedium)
             Spacer(Modifier.width(4.dp))
             Text(timeString(day, talk.time), color = MoltonfColors.talkTime, style = MaterialTheme.typography.labelSmall)
+            if (onBookmarkClick != null) {
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text = if (isBookmarked) "★" else "☆",
+                    color = if (isBookmarked) MaterialTheme.colorScheme.primary else MoltonfColors.talkTime,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.clickable(onClick = onBookmarkClick).padding(horizontal = 8.dp),
+                )
+            }
         }
         Row(modifier = Modifier.padding(top = 4.dp), verticalAlignment = Alignment.Top) {
             FaceIconImage(

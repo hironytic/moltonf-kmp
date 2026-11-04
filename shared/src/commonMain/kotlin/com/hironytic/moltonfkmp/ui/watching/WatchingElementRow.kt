@@ -8,7 +8,6 @@ import com.hironytic.moltonfkmp.story.StoryEvent
 import com.hironytic.moltonfkmp.story.Story
 import com.hironytic.moltonfkmp.story.Talk
 import com.hironytic.moltonfkmp.story.TalkMap
-import com.hironytic.moltonfkmp.story.TalkType
 import com.hironytic.moltonfkmp.story.TalkWithDay
 
 /**
@@ -26,6 +25,8 @@ fun WatchingElementRow(
     isTalkVisible: (TalkWithDay) -> Boolean,
     onLinkClick: (talk: Talk, linkKey: String, targets: List<TalkWithDay>) -> Unit,
     modifier: Modifier = Modifier,
+    bookmarkedElementIds: Set<String> = emptySet(),
+    onBookmarkClick: ((talk: Talk) -> Unit)? = null,
 ) {
     when (element) {
         is WatchingElement.Message -> MoltonfMessageView(element, modifier)
@@ -39,19 +40,13 @@ fun WatchingElementRow(
                 talkMap = talkMap,
                 isTalkVisible = isTalkVisible,
                 onLinkClick = { linkKey, targets -> onLinkClick(storyElement, linkKey, targets) },
+                isBookmarked = storyElement.elementId in bookmarkedElementIds,
+                onBookmarkClick = onBookmarkClick?.let { { it(storyElement) } },
                 modifier = modifier,
             )
 
             is Assault -> {
-                val asWolfTalk = Talk(
-                    elementId = storyElement.elementId,
-                    talkType = TalkType.WOLF,
-                    avatarId = storyElement.byWhom,
-                    xname = storyElement.xname,
-                    time = storyElement.time,
-                    talkNo = null,
-                    messageLines = storyElement.messageLines,
-                )
+                val asWolfTalk = storyElement.asWolfTalk()
                 TalkView(
                     talk = asWolfTalk,
                     day = day,
@@ -60,6 +55,8 @@ fun WatchingElementRow(
                     talkMap = talkMap,
                     isTalkVisible = isTalkVisible,
                     onLinkClick = { linkKey, targets -> onLinkClick(asWolfTalk, linkKey, targets) },
+                    isBookmarked = asWolfTalk.elementId in bookmarkedElementIds,
+                    onBookmarkClick = onBookmarkClick?.let { { it(asWolfTalk) } },
                     modifier = modifier,
                 )
             }
