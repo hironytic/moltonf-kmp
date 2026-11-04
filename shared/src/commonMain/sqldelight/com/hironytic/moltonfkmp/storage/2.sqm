@@ -1,0 +1,3 @@
+-- Version 2 -> 3: add bookmarks (JSON) and the consideration memo to a workspace.
+ALTER TABLE workspaceRecord ADD COLUMN bookmarks TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE workspaceRecord ADD COLUMN memo TEXT NOT NULL DEFAULT '';

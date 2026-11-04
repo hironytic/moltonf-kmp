@@ -3,6 +3,7 @@ package com.hironytic.moltonfkmp.storage
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.hironytic.moltonfkmp.story.Avatar
 import com.hironytic.moltonfkmp.story.Story
+import com.hironytic.moltonfkmp.workspace.Bookmark
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -99,6 +100,25 @@ class WorkspaceStoreTest {
         assertNull(store.getWorkspace(workspace.id))
         assertNull(store.getStory(workspace.storyId))
     }
+
+    @Test
+    fun bookmarksAndMemoArePersisted() = runBlocking {
+        val store = WorkspaceStore(newTestDatabase())
+        val workspace = store.add(
+            sampleStory("G1"),
+            NewWorkspace("name", 0, null, "gerd", Instant.fromEpochMilliseconds(1_000)),
+        )
+        assertEquals(emptyList(), store.getWorkspace(workspace.id)?.bookmarks)
+        assertEquals("", store.getWorkspace(workspace.id)?.memo)
+
+        val updated = workspace.copy(
+            bookmarks = listOf(Bookmark(id = "b1", day = 1, elementId = "e1", comment = "気になる")),
+            memo = "考察メモ\n2行目",
+        )
+        store.update(updated)
+
+        assertEquals(updated, store.getWorkspace(workspace.id))
+    }
 }
 
 class DatabaseMigrationTest {
@@ -127,6 +147,8 @@ class DatabaseMigrationTest {
             val driver = DatabaseDriverFactory(jdbcUrl = url, isNewDatabase = false).createDriver()
             val workspace = runBlocking { WorkspaceStore(createMoltonfDatabase(driver)).getWorkspace("w1") }
             assertEquals(0, workspace?.readPosition)
+            assertEquals(emptyList(), workspace?.bookmarks)
+            assertEquals("", workspace?.memo)
             assertEquals(2, workspace?.dayProgress)
             driver.close()
         } finally {

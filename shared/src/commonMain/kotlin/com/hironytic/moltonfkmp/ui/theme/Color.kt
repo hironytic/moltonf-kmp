@@ -20,6 +20,8 @@ internal object Palette {
     /** Customized `primary-500`; used for the focus ring of inputs. */
     val Primary500 = Color(0xFFFE795D)
 
+    val Blue400 = Color(0xFF51A2FF)
+
     val Red500 = Color(0xFFFB2C36)
     val Red600 = Color(0xFFE7000B)
     val Red700 = Color(0xFFC10007)
@@ -93,6 +95,9 @@ object MoltonfColors {
         symbolOrange = Color(0xFFCC5500),
         bracketRange = Color(0xFF0033CC),
     )
+
+    /** Flash background of an item a jump landed on; blue because the accent red hardly stands out on the story's colors. */
+    val jumpHighlight = Palette.Blue400.copy(alpha = 0.4f)
 
     val moltonfMessage = Color(0xFFF5E8B2)
 }

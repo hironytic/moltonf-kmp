@@ -1,6 +1,7 @@
 package com.hironytic.moltonfkmp.storage
 
 import com.hironytic.moltonfkmp.story.Story
+import com.hironytic.moltonfkmp.workspace.Bookmark
 import com.hironytic.moltonfkmp.workspace.Workspace
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -40,6 +41,8 @@ class WorkspaceStore(
                 dayProgress = workspace.dayProgress?.toLong(),
                 readPosition = workspace.readPosition.toLong(),
                 playerCharacter = workspace.playerCharacter,
+                bookmarks = json.encodeToString(emptyList<Bookmark>()),
+                memo = "",
                 lastModified = workspace.lastModified,
             )
             Workspace(
@@ -63,6 +66,8 @@ class WorkspaceStore(
             dayProgress = workspace.dayProgress?.toLong(),
             readPosition = workspace.readPosition.toLong(),
             playerCharacter = workspace.playerCharacter,
+            bookmarks = json.encodeToString(workspace.bookmarks),
+            memo = workspace.memo,
             lastModified = workspace.lastModified,
             id = workspace.id,
         )
@@ -99,6 +104,8 @@ class WorkspaceStore(
         dayProgress = dayProgress?.toInt(),
         readPosition = readPosition.toInt(),
         playerCharacter = playerCharacter,
+        bookmarks = json.decodeFromString(bookmarks),
+        memo = memo,
         lastModified = lastModified,
     )
 }
