@@ -2,11 +2,11 @@ package com.hironytic.moltonfkmp.ui.watching
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +19,8 @@ import com.hironytic.moltonfkmp.story.Avatar
 import com.hironytic.moltonfkmp.story.TalkType
 import com.hironytic.moltonfkmp.ui.theme.MoltonfFilterChip
 import com.hironytic.moltonfkmp.ui.theme.NeutralOutlinedButton
+import moltonf_kmp.shared.generated.resources.Res
+import org.jetbrains.compose.resources.painterResource
 
 private val filterableTalkTypes = listOf(
     TalkType.PUBLIC to "通常",
@@ -85,7 +87,7 @@ fun TalkFilterToggleButton(
 ) {
     IconButton(onClick = onClick, modifier = modifier) {
         Icon(
-            imageVector = FilterAltIcon,
+            painter = painterResource(Res.drawable.ic_filter_alt),
             contentDescription = if (isFilterActive) "フィルタ（適用中）" else "フィルタ",
             tint = if (isFilterActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         )

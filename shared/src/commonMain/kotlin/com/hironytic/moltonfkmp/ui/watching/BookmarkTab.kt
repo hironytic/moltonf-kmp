@@ -29,9 +29,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
 import com.hironytic.moltonfkmp.story.TalkWithDay
 import com.hironytic.moltonfkmp.workspace.Bookmark
+import kotlinx.coroutines.delay
+import moltonf_kmp.shared.generated.resources.Res
+import org.jetbrains.compose.resources.painterResource
 
 /** The list of bookmarks, each shown with its comment and talk. */
 @Composable
@@ -104,7 +106,7 @@ fun BookmarkTab(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         ) {
                             Icon(
-                                imageVector = CommentIcon,
+                                painter = painterResource(Res.drawable.ic_comment),
                                 contentDescription = "コメント",
                                 tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(top = 2.dp).size(18.dp),

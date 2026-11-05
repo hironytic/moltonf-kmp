@@ -18,14 +18,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,7 +40,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.hironytic.moltonfkmp.story.Assault
@@ -51,6 +50,9 @@ import com.hironytic.moltonfkmp.ui.theme.MoltonfTopAppBar
 import com.hironytic.moltonfkmp.ui.theme.NeutralOutlinedButton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import moltonf_kmp.shared.generated.resources.Res
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Lower bounds of the height of a list row, used by the "scroll to bottom" button.
@@ -135,7 +137,7 @@ private fun WatchingNavigationBar(selectedTab: WatchingTab, onSelectTab: (Watchi
                 NavigationBarItem(
                     selected = selectedTab == tab,
                     onClick = { onSelectTab(tab) },
-                    icon = { Icon(tab.icon, contentDescription = null) },
+                    icon = { Icon(painterResource(tab.icon), contentDescription = null) },
                     label = { Text(tab.title) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = MaterialTheme.colorScheme.primary,
@@ -150,11 +152,11 @@ private fun WatchingNavigationBar(selectedTab: WatchingTab, onSelectTab: (Watchi
     }
 }
 
-private val WatchingTab.icon: ImageVector
+private val WatchingTab.icon: DrawableResource
     get() = when (this) {
-        WatchingTab.TALK -> ChatBubbleIcon
-        WatchingTab.BOOKMARK -> BookmarkIcon
-        WatchingTab.CONSIDERATION -> LightbulbIcon
+        WatchingTab.TALK -> Res.drawable.ic_chat_bubble
+        WatchingTab.BOOKMARK -> Res.drawable.ic_bookmark
+        WatchingTab.CONSIDERATION -> Res.drawable.ic_lightbulb
     }
 
 private val WatchingTab.title: String
