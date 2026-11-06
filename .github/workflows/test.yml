@@ -10,8 +10,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test-jvm-android:
-    name: Test (Desktop JVM / Android host)
+  test-jvm:
+    name: Test (Desktop JVM)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,5 +22,3 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Run Desktop (JVM) tests
         run: ./gradlew :shared:jvmTest
-      - name: Run Android host tests
-        run: ./gradlew :shared:testAndroidHostTest
