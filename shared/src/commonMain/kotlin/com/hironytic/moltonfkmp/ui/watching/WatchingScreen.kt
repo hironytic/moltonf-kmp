@@ -51,6 +51,9 @@ import com.hironytic.moltonfkmp.ui.theme.NeutralOutlinedButton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import moltonf_kmp.shared.generated.resources.Res
+import moltonf_kmp.shared.generated.resources.ic_bookmark
+import moltonf_kmp.shared.generated.resources.ic_chat_bubble
+import moltonf_kmp.shared.generated.resources.ic_lightbulb
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 

@@ -20,6 +20,7 @@ import com.hironytic.moltonfkmp.story.TalkType
 import com.hironytic.moltonfkmp.ui.theme.MoltonfFilterChip
 import com.hironytic.moltonfkmp.ui.theme.NeutralOutlinedButton
 import moltonf_kmp.shared.generated.resources.Res
+import moltonf_kmp.shared.generated.resources.ic_filter_alt
 import org.jetbrains.compose.resources.painterResource
 
 private val filterableTalkTypes = listOf(

@@ -33,6 +33,7 @@ import com.hironytic.moltonfkmp.story.TalkWithDay
 import com.hironytic.moltonfkmp.workspace.Bookmark
 import kotlinx.coroutines.delay
 import moltonf_kmp.shared.generated.resources.Res
+import moltonf_kmp.shared.generated.resources.ic_comment
 import org.jetbrains.compose.resources.painterResource
 
 /** The list of bookmarks, each shown with its comment and talk. */
