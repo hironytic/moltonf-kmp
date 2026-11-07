@@ -20,6 +20,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
@@ -51,6 +52,7 @@ import com.hironytic.moltonfkmp.ui.theme.NeutralOutlinedButton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import moltonf_kmp.shared.generated.resources.Res
+import moltonf_kmp.shared.generated.resources.ic_arrow_back
 import moltonf_kmp.shared.generated.resources.ic_bookmark
 import moltonf_kmp.shared.generated.resources.ic_chat_bubble
 import moltonf_kmp.shared.generated.resources.ic_lightbulb
@@ -83,7 +85,9 @@ fun WatchingScreen(
             MoltonfTopAppBar(
                 title = { Text(loaded?.story?.villageFullName ?: "観戦") },
                 navigationIcon = {
-                    NeutralOutlinedButton(onClick = onBack, text = "戻る")
+                    IconButton(onClick = onBack) {
+                        Icon(painterResource(Res.drawable.ic_arrow_back), contentDescription = "戻る")
+                    }
                 },
                 actions = {
                     if (loaded != null && loaded.selectedTab == WatchingTab.TALK) {
