@@ -42,6 +42,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.hironytic.moltonfkmp.story.Assault
 import com.hironytic.moltonfkmp.story.Talk
@@ -83,7 +84,7 @@ fun WatchingScreen(
         topBar = {
             val loaded = uiState as? WatchingUiState.Loaded
             MoltonfTopAppBar(
-                title = { Text(loaded?.story?.villageFullName ?: "観戦") },
+                title = { Text(loaded?.workspaceName ?: "", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(painterResource(Res.drawable.ic_arrow_back), contentDescription = "戻る")
