@@ -9,7 +9,8 @@ pluginManagement {
                 includeGroupAndSubgroups("com.google")
             }
         }
-        // Google's Maven Central mirror first, to avoid 429 rate limits; falls back to Maven Central
+        // Google's Maven Central mirror, listed first to avoid "429 Too Many Requests" errors from Maven Central
+        // (see https://central.sonatype.org/faq/429-error/). Anything missing here falls through to the repositories below.
         maven("https://maven-central.storage.googleapis.com/maven2/")
         gradlePluginPortal()
         mavenCentral()
@@ -25,7 +26,8 @@ dependencyResolutionManagement {
                 includeGroupAndSubgroups("com.google")
             }
         }
-        // Google's Maven Central mirror first, to avoid 429 rate limits; falls back to Maven Central
+        // Google's Maven Central mirror, listed first to avoid "429 Too Many Requests" errors from Maven Central
+        // (see https://central.sonatype.org/faq/429-error/). Anything missing here falls through to the repositories below.
         maven("https://maven-central.storage.googleapis.com/maven2/")
         mavenCentral()
     }
