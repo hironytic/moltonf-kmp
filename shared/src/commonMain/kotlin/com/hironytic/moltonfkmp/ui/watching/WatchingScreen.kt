@@ -1,10 +1,14 @@
 package com.hironytic.moltonfkmp.ui.watching
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,16 +24,19 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,18 +48,24 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.hironytic.moltonfkmp.story.Assault
 import com.hironytic.moltonfkmp.story.Talk
 import com.hironytic.moltonfkmp.story.TalkWithDay
 import com.hironytic.moltonfkmp.ui.theme.MoltonfColors
 import com.hironytic.moltonfkmp.ui.theme.MoltonfTopAppBar
-import com.hironytic.moltonfkmp.ui.theme.NeutralOutlinedButton
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 import moltonf_kmp.shared.generated.resources.Res
+import moltonf_kmp.shared.generated.resources.ic_arrow_back
 import moltonf_kmp.shared.generated.resources.ic_bookmark
 import moltonf_kmp.shared.generated.resources.ic_chat_bubble
+import moltonf_kmp.shared.generated.resources.ic_keyboard_arrow_down
+import moltonf_kmp.shared.generated.resources.ic_keyboard_arrow_up
 import moltonf_kmp.shared.generated.resources.ic_lightbulb
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -66,6 +79,11 @@ import org.jetbrains.compose.resources.painterResource
 private val MIN_TALK_ROW_HEIGHT = 64.dp
 private val MIN_OTHER_ROW_HEIGHT = 40.dp
 
+/** How long the jump button stays visible after scrolling stops. */
+private val JUMP_BUTTON_HIDE_DELAY = 2.seconds
+
+private enum class JumpDirection { TOP, BOTTOM }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WatchingScreen(
@@ -74,14 +92,26 @@ fun WatchingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val expandedThreads by viewModel.expandedThreads.collectAsState()
+    var filterExpanded by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         topBar = {
+            val loaded = uiState as? WatchingUiState.Loaded
             MoltonfTopAppBar(
-                title = { Text(((uiState as? WatchingUiState.Loaded)?.story?.villageFullName) ?: "観戦") },
+                title = { Text(loaded?.workspaceName ?: "", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
-                    NeutralOutlinedButton(onClick = onBack, text = "戻る")
+                    IconButton(onClick = onBack) {
+                        Icon(painterResource(Res.drawable.ic_arrow_back), contentDescription = "戻る")
+                    }
+                },
+                actions = {
+                    if (loaded != null && loaded.selectedTab == WatchingTab.TALK) {
+                        TalkFilterToggleButton(
+                            isFilterActive = !loaded.talkFilter.isDefault,
+                            onClick = { filterExpanded = !filterExpanded },
+                        )
+                    }
                 },
             )
         },
@@ -118,6 +148,8 @@ fun WatchingScreen(
                             viewModel = viewModel,
                             expandedThreads = expandedThreads,
                             listState = listState,
+                            filterExpanded = filterExpanded,
+                            onFilterDismiss = { filterExpanded = false },
                             scrolledToTopForDay = scrolledToTopForDay,
                             onScrolledToTopForDay = { scrolledToTopForDay = it },
                             modifier = Modifier.weight(1f),
@@ -176,6 +208,8 @@ private fun TalkTab(
     viewModel: WatchingViewModel,
     expandedThreads: Map<String, TalkThreadEntry>,
     listState: LazyListState,
+    filterExpanded: Boolean,
+    onFilterDismiss: () -> Unit,
     scrolledToTopForDay: Int,
     onScrolledToTopForDay: (Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -242,136 +276,191 @@ private fun TalkTab(
                 if (owner >= 0) viewModel.updateReadPosition(owner)
             }
     }
-    var filterExpanded by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
-    val lastItemIndex = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
+
+    // readPosition indexes the unfiltered elements; the element it points to may be
+    // hidden by the talk filter, in which case use the last displayed one before it.
+    val lastSeenDisplayedPos = { state.displayedElements.indexOfLast { it.index <= furthestSeenIndex } }
+    // Scroll so that only the top part of the last-seen element is shown, with
+    // a fixed length that is no longer than any element (so nothing unseen
+    // below it can appear). Unlike aligning its bottom to the viewport's,
+    // this needs no knowledge of the element's real height.
+    val revealPxOf = { displayedPos: Int ->
+        with(density) {
+            val element = state.displayedElements.getOrNull(displayedPos)?.element
+            val storyElement = (element as? WatchingElement.Element)?.storyElement
+            val isTalkLike = storyElement is Talk || storyElement is Assault
+            (if (isTalkLike) MIN_TALK_ROW_HEIGHT else MIN_OTHER_ROW_HEIGHT).toPx().toInt()
+        }
+    }
+    // Whether the list is already scrolled to the position that "scroll to bottom" leads to
+    // on the newest day, i.e. the jump would not move anything.
+    val isAtReadPosition = isAtReadPosition@{
+        if (!isNewestDay) return@isAtReadPosition false
+        val displayedPos = lastSeenDisplayedPos()
+        if (displayedPos < 0) return@isAtReadPosition false
+        val target = displayedItemIndices.getOrNull(displayedPos) ?: return@isAtReadPosition false
+        val info = listState.layoutInfo
+        val viewportEnd = info.viewportEndOffset - info.afterContentPadding
+        val item = info.visibleItemsInfo.firstOrNull { it.index == target } ?: return@isAtReadPosition false
+        item.offset + revealPxOf(displayedPos) - viewportEnd <= 0
+    }
+    val currentIsAtReadPosition by rememberUpdatedState(isAtReadPosition)
+
+    val scrollToBottom: () -> Job = {
+        val displayedPos = lastSeenDisplayedPos()
+        // Read when the button is tapped, not during composition, as it changes on every scroll.
+        val lastItemIndex = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
+        val target = if (isNewestDay) {
+            displayedItemIndices.getOrNull(displayedPos) ?: lastItemIndex
+        } else {
+            lastItemIndex
+        }
+        scope.launch {
+            if (!isNewestDay) {
+                listState.animateScrollToItem(target)
+                return@launch
+            }
+            if (displayedPos < 0) {
+                listState.animateScrollToItem(0)
+                return@launch
+            }
+            val revealPx = revealPxOf(displayedPos)
+            val info = listState.layoutInfo
+            val viewportEnd = info.viewportEndOffset - info.afterContentPadding
+            val item = info.visibleItemsInfo.firstOrNull { it.index == target }
+            if (item != null) {
+                // Already on screen: only move forward, and only if needed.
+                val cutOff = item.offset + revealPx - viewportEnd
+                if (cutOff > 0) listState.animateScrollBy(cutOff.toFloat())
+            } else {
+                val viewportHeight = viewportEnd - info.viewportStartOffset - info.beforeContentPadding
+                listState.animateScrollToItem(target, (revealPx - viewportHeight).coerceAtMost(0))
+            }
+        }
+    }
+
+    // Which jump button to offer: "to top" only while the user is scrolling back toward the
+    // beginning, "to bottom" only while scrolling forward with somewhere further down to go.
+    // Null otherwise.
+    val jumpDirection by remember(listState) {
+        derivedStateOf {
+            when {
+                listState.lastScrolledBackward && listState.canScrollBackward -> JumpDirection.TOP
+                listState.lastScrolledForward && listState.canScrollForward && !currentIsAtReadPosition() ->
+                    JumpDirection.BOTTOM
+                else -> null
+            }
+        }
+    }
+    // Kept so that the button's icon does not change to nothing while it fades out.
+    var lastJumpDirection by remember { mutableStateOf(JumpDirection.BOTTOM) }
+    // The button is shown while the list is scrolling and hides itself a while after it stops.
+    var isJumpButtonActive by remember { mutableStateOf(false) }
+    // True while a scroll started by the button itself is running; the button stays hidden then.
+    var isJumpButtonSuppressed by remember { mutableStateOf(false) }
+    val isJumpButtonVisible = isJumpButtonActive && !isJumpButtonSuppressed && jumpDirection != null
+    LaunchedEffect(jumpDirection) { jumpDirection?.let { lastJumpDirection = it } }
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }.collectLatest { scrolling ->
+            if (scrolling) {
+                isJumpButtonActive = true
+            } else {
+                delay(JUMP_BUTTON_HIDE_DELAY)
+                isJumpButtonActive = false
+            }
+        }
+    }
 
     Column(modifier = modifier.fillMaxSize()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            DayChanger(
-                watchableDays = state.watchableDays,
-                currentDay = state.currentDay,
-                onDaySelected = viewModel::changeDay,
-                modifier = Modifier.weight(1f),
-                trailingContent = {
-                    TalkFilterToggleButton(
-                        isFilterActive = !state.talkFilter.isDefault,
-                        onClick = { filterExpanded = !filterExpanded },
-                    )
-                },
-            )
-            NeutralOutlinedButton(
-                onClick = { scope.launch { listState.animateScrollToItem(0) } },
-                text = "先頭",
-            )
-            NeutralOutlinedButton(
-                onClick = {
-                    // readPosition indexes the unfiltered elements; the element it points to may be
-                    // hidden by the talk filter, in which case use the last displayed one before it.
-                    val displayedPos = state.displayedElements.indexOfLast { it.index <= furthestSeenIndex }
-                    val target = if (isNewestDay) {
-                        displayedItemIndices.getOrNull(displayedPos) ?: lastItemIndex
-                    } else {
-                        lastItemIndex
-                    }
-                    scope.launch {
-                        if (!isNewestDay) {
-                            listState.animateScrollToItem(target)
-                            return@launch
-                        }
-                        if (displayedPos < 0) {
-                            listState.animateScrollToItem(0)
-                            return@launch
-                        }
-                        // Scroll so that only the top part of the last-seen element is shown, with
-                        // a fixed length that is no longer than any element (so nothing unseen
-                        // below it can appear). Unlike aligning its bottom to the viewport's,
-                        // this needs no knowledge of the element's real height.
-                        val revealPx = with(density) {
-                            val element = state.displayedElements.getOrNull(displayedPos)?.element
-                            val storyElement = (element as? WatchingElement.Element)?.storyElement
-                            val isTalkLike = storyElement is Talk || storyElement is Assault
-                            (if (isTalkLike) MIN_TALK_ROW_HEIGHT else MIN_OTHER_ROW_HEIGHT).toPx().toInt()
-                        }
-                        val info = listState.layoutInfo
-                        val viewportEnd = info.viewportEndOffset - info.afterContentPadding
-                        val item = info.visibleItemsInfo.firstOrNull { it.index == target }
-                        if (item != null) {
-                            // Already on screen: only move forward, and only if needed.
-                            val cutOff = item.offset + revealPx - viewportEnd
-                            if (cutOff > 0) listState.animateScrollBy(cutOff.toFloat())
-                        } else {
-                            val viewportHeight = viewportEnd - info.viewportStartOffset - info.beforeContentPadding
-                            listState.animateScrollToItem(target, (revealPx - viewportHeight).coerceAtMost(0))
-                        }
-                    }
-                },
-                modifier = Modifier.padding(start = 4.dp, end = 8.dp),
-                text = "末尾",
-            )
-        }
-        LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth()) {
-            state.displayedElements.forEach { (_, element) ->
-                item(key = element.elementId) {
-                    WatchingElementRow(
-                        element = element,
-                        day = state.currentDay,
-                        story = state.story,
-                        characterMap = state.characterMap,
-                        talkMap = state.talkMap,
-                        isTalkVisible = isVisible,
-                        onLinkClick = { talk, linkKey, targets ->
-                            viewModel.toggleLink(state.currentDay, talk, emptyList(), linkKey, targets)
-                        },
-                        bookmarkedElementIds = state.bookmarkedElementIds,
-                        onBookmarkClick = { talk ->
-                            // A bookmarked talk's star shows its bookmark in the list; otherwise add a new one.
-                            val existing = state.bookmarkItems.firstOrNull {
-                                it.bookmark.day == state.currentDay && it.bookmark.elementId == talk.elementId
-                            }
-                            if (existing != null) viewModel.showBookmark(existing.bookmark.id) else bookmarkTarget = talk
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(highlightFlashColor(element.elementId == highlightedElementId))
-                            .padding(horizontal = 8.dp, vertical = 6.dp),
-                    )
-                }
-                val thread = expandedThreads[threadKey(state.currentDay, element.elementId)]
-                if (thread != null) thread.flattenDescendants().forEach { flat ->
-                    item(key = flat.entry.id) {
-                        TalkView(
-                            talk = flat.entry.talk,
-                            day = flat.entry.day,
+        DayChanger(
+            watchableDays = state.watchableDays,
+            currentDay = state.currentDay,
+            onDaySelected = viewModel::changeDay,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+                state.displayedElements.forEach { (_, element) ->
+                    item(key = element.elementId) {
+                        WatchingElementRow(
+                            element = element,
+                            day = state.currentDay,
                             story = state.story,
                             characterMap = state.characterMap,
                             talkMap = state.talkMap,
                             isTalkVisible = isVisible,
-                            onLinkClick = { linkKey, targets ->
-                                viewModel.toggleLink(state.currentDay, thread.talk, flat.path, linkKey, targets)
+                            onLinkClick = { talk, linkKey, targets ->
+                                viewModel.toggleLink(state.currentDay, talk, emptyList(), linkKey, targets)
+                            },
+                            bookmarkedElementIds = state.bookmarkedElementIds,
+                            onBookmarkClick = { talk ->
+                                // A bookmarked talk's star shows its bookmark in the list; otherwise add a new one.
+                                val existing = state.bookmarkItems.firstOrNull {
+                                    it.bookmark.day == state.currentDay && it.bookmark.elementId == talk.elementId
+                                }
+                                if (existing != null) viewModel.showBookmark(existing.bookmark.id) else bookmarkTarget = talk
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(MoltonfColors.linkedTalkBackground)
-                                .padding(start = (8 + flat.depth * 16).dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+                                .background(highlightFlashColor(element.elementId == highlightedElementId))
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
                         )
                     }
+                    val thread = expandedThreads[threadKey(state.currentDay, element.elementId)]
+                    if (thread != null) thread.flattenDescendants().forEach { flat ->
+                        item(key = flat.entry.id) {
+                            TalkView(
+                                talk = flat.entry.talk,
+                                day = flat.entry.day,
+                                story = state.story,
+                                characterMap = state.characterMap,
+                                talkMap = state.talkMap,
+                                isTalkVisible = isVisible,
+                                onLinkClick = { linkKey, targets ->
+                                    viewModel.toggleLink(state.currentDay, thread.talk, flat.path, linkKey, targets)
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MoltonfColors.linkedTalkBackground)
+                                    .padding(start = (8 + flat.depth * 16).dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+                            )
+                        }
+                    }
                 }
-            }
-            if (state.canMoveToNextDay) {
-                item {
-                    Button(
-                        onClick = viewModel::moveToNextDay,
-                        modifier = Modifier.padding(16.dp),
-                    ) {
-                        Text("次の日へ")
+                if (state.canMoveToNextDay) {
+                    item {
+                        Button(
+                            onClick = viewModel::moveToNextDay,
+                            modifier = Modifier.padding(16.dp),
+                        ) {
+                            Text("次の日へ")
+                        }
                     }
                 }
             }
+            JumpButton(
+                visible = isJumpButtonVisible,
+                direction = lastJumpDirection,
+                onClick = {
+                    val job = when (lastJumpDirection) {
+                        JumpDirection.TOP -> scope.launch { listState.animateScrollToItem(0) }
+                        JumpDirection.BOTTOM -> scrollToBottom()
+                    }
+                    // Hide right away and keep it hidden until the jump has finished.
+                    isJumpButtonSuppressed = true
+                    isJumpButtonActive = false
+                    job.invokeOnCompletion {
+                        isJumpButtonSuppressed = false
+                        isJumpButtonActive = false
+                    }
+                },
+                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+            )
         }
         if (filterExpanded) {
-            ModalBottomSheet(onDismissRequest = { filterExpanded = false }) {
+            ModalBottomSheet(onDismissRequest = onFilterDismiss) {
                 TalkFilterPanel(
                     avatars = state.story.avatarList,
                     filter = state.talkFilter,
@@ -396,5 +485,43 @@ private fun TalkTab(
             },
             onDismiss = { bookmarkTarget = null },
         )
+    }
+}
+
+/**
+ * A small floating button that jumps to the top or the bottom of the talk list.
+ * Declared at top level so that it is not affected by the implicit receivers of its caller.
+ */
+@Composable
+private fun JumpButton(
+    visible: Boolean,
+    direction: JumpDirection,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn() + scaleIn(),
+        exit = fadeOut() + scaleOut(),
+        modifier = modifier,
+    ) {
+        SmallFloatingActionButton(
+            onClick = onClick,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ) {
+            Icon(
+                painter = painterResource(
+                    when (direction) {
+                        JumpDirection.TOP -> Res.drawable.ic_keyboard_arrow_up
+                        JumpDirection.BOTTOM -> Res.drawable.ic_keyboard_arrow_down
+                    },
+                ),
+                contentDescription = when (direction) {
+                    JumpDirection.TOP -> "先頭へ"
+                    JumpDirection.BOTTOM -> "末尾へ"
+                },
+            )
+        }
     }
 }

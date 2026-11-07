@@ -3,6 +3,7 @@ package com.hironytic.moltonfkmp.ui.theme
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
@@ -28,11 +29,13 @@ import androidx.compose.ui.unit.dp
 fun MoltonfTopAppBar(
     title: @Composable () -> Unit,
     navigationIcon: @Composable () -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {},
 ) {
     Column {
         TopAppBar(
             title = title,
             navigationIcon = navigationIcon,
+            actions = actions,
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
                 titleContentColor = Palette.Gray300,

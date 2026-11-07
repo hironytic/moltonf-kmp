@@ -32,6 +32,7 @@ sealed interface WatchingUiState {
     data object Loading : WatchingUiState
 
     data class Loaded(
+        val workspaceName: String,
         val story: Story,
         val characterMap: CharacterMap,
         val talkMap: TalkMap,
@@ -109,6 +110,7 @@ class WatchingViewModel(
         val currentDay = workspace.currentDay
         val elements = currentElements(currentStory, characterMap, workspace.playerCharacter, dayProgress, currentDay)
         _uiState.value = WatchingUiState.Loaded(
+            workspaceName = workspace.name,
             story = currentStory,
             characterMap = characterMap,
             talkMap = talkMap,
