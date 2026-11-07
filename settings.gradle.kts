@@ -9,11 +9,14 @@ pluginManagement {
                 includeGroupAndSubgroups("com.google")
             }
         }
-        // Google's Maven Central mirror, listed first to avoid "429 Too Many Requests" errors from Maven Central.
-        // These errors occur frequently in Claude Code's cloud environment (not in typical local environments),
-        // probably because its egress network is shared with other users (see https://central.sonatype.org/faq/429-error/).
-        // Anything missing here falls through to the repositories below.
-        maven("https://maven-central.storage.googleapis.com/maven2/")
+        // In Claude Code's cloud environment (CLAUDE_CODE_REMOTE=true), use Google's Maven Central mirror, listed first,
+        // to avoid frequent "429 Too Many Requests" errors from Maven Central. These errors do not occur in typical
+        // local environments, probably because the cloud egress network is shared with other users
+        // (see https://central.sonatype.org/faq/429-error/).
+        // Anything missing from the mirror falls through to the repositories below.
+        if (providers.environmentVariable("CLAUDE_CODE_REMOTE").orNull == "true") {
+            maven("https://maven-central.storage.googleapis.com/maven2/")
+        }
         gradlePluginPortal()
         mavenCentral()
     }
@@ -28,11 +31,14 @@ dependencyResolutionManagement {
                 includeGroupAndSubgroups("com.google")
             }
         }
-        // Google's Maven Central mirror, listed first to avoid "429 Too Many Requests" errors from Maven Central.
-        // These errors occur frequently in Claude Code's cloud environment (not in typical local environments),
-        // probably because its egress network is shared with other users (see https://central.sonatype.org/faq/429-error/).
-        // Anything missing here falls through to the repositories below.
-        maven("https://maven-central.storage.googleapis.com/maven2/")
+        // In Claude Code's cloud environment (CLAUDE_CODE_REMOTE=true), use Google's Maven Central mirror, listed first,
+        // to avoid frequent "429 Too Many Requests" errors from Maven Central. These errors do not occur in typical
+        // local environments, probably because the cloud egress network is shared with other users
+        // (see https://central.sonatype.org/faq/429-error/).
+        // Anything missing from the mirror falls through to the repositories below.
+        if (providers.environmentVariable("CLAUDE_CODE_REMOTE").orNull == "true") {
+            maven("https://maven-central.storage.googleapis.com/maven2/")
+        }
         mavenCentral()
     }
 }
