@@ -11,8 +11,8 @@ pluginManagement {
         }
         // Google's Maven Central mirror first, to avoid 429 rate limits; falls back to Maven Central
         maven("https://maven-central.storage-download.googleapis.com/maven2/")
-        mavenCentral()
         gradlePluginPortal()
+        mavenCentral()
     }
 }
 
