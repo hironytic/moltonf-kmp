@@ -74,14 +74,24 @@ fun WatchingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val expandedThreads by viewModel.expandedThreads.collectAsState()
+    var filterExpanded by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         topBar = {
+            val loaded = uiState as? WatchingUiState.Loaded
             MoltonfTopAppBar(
-                title = { Text(((uiState as? WatchingUiState.Loaded)?.story?.villageFullName) ?: "観戦") },
+                title = { Text(loaded?.story?.villageFullName ?: "観戦") },
                 navigationIcon = {
                     NeutralOutlinedButton(onClick = onBack, text = "戻る")
+                },
+                actions = {
+                    if (loaded != null && loaded.selectedTab == WatchingTab.TALK) {
+                        TalkFilterToggleButton(
+                            isFilterActive = !loaded.talkFilter.isDefault,
+                            onClick = { filterExpanded = !filterExpanded },
+                        )
+                    }
                 },
             )
         },
@@ -118,6 +128,8 @@ fun WatchingScreen(
                             viewModel = viewModel,
                             expandedThreads = expandedThreads,
                             listState = listState,
+                            filterExpanded = filterExpanded,
+                            onFilterDismiss = { filterExpanded = false },
                             scrolledToTopForDay = scrolledToTopForDay,
                             onScrolledToTopForDay = { scrolledToTopForDay = it },
                             modifier = Modifier.weight(1f),
@@ -176,6 +188,8 @@ private fun TalkTab(
     viewModel: WatchingViewModel,
     expandedThreads: Map<String, TalkThreadEntry>,
     listState: LazyListState,
+    filterExpanded: Boolean,
+    onFilterDismiss: () -> Unit,
     scrolledToTopForDay: Int,
     onScrolledToTopForDay: (Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -242,7 +256,6 @@ private fun TalkTab(
                 if (owner >= 0) viewModel.updateReadPosition(owner)
             }
     }
-    var filterExpanded by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
     val lastItemIndex = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
@@ -254,12 +267,6 @@ private fun TalkTab(
                 currentDay = state.currentDay,
                 onDaySelected = viewModel::changeDay,
                 modifier = Modifier.weight(1f),
-                trailingContent = {
-                    TalkFilterToggleButton(
-                        isFilterActive = !state.talkFilter.isDefault,
-                        onClick = { filterExpanded = !filterExpanded },
-                    )
-                },
             )
             NeutralOutlinedButton(
                 onClick = { scope.launch { listState.animateScrollToItem(0) } },
@@ -371,7 +378,7 @@ private fun TalkTab(
             }
         }
         if (filterExpanded) {
-            ModalBottomSheet(onDismissRequest = { filterExpanded = false }) {
+            ModalBottomSheet(onDismissRequest = onFilterDismiss) {
                 TalkFilterPanel(
                     avatars = state.story.avatarList,
                     filter = state.talkFilter,
