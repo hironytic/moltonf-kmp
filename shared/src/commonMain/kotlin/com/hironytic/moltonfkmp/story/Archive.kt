@@ -141,6 +141,7 @@ private class ArchiveParser(private val parser: XmlPullParser) {
         val baseURI = requiredAttr("xml:base")
         val landId = requiredAttr("landId")
         val graveIconURI = requiredAttr("graveIconURI")
+        val commitTime = optionalAttr("commitTime")?.let { parseTime(it) }
 
         var avatarList: List<Avatar>? = null
         val periods = mutableListOf<Period>()
@@ -157,6 +158,7 @@ private class ArchiveParser(private val parser: XmlPullParser) {
             baseURI = baseURI,
             landId = landId,
             graveIconURI = graveIconURI,
+            commitTime = commitTime,
             periods = periods,
             avatarList = avatarList
                 ?: throw InvalidArchiveException("Missing child element \"avatarList\" in element \"village\"."),

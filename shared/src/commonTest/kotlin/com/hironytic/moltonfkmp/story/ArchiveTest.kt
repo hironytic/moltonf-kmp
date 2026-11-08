@@ -21,6 +21,7 @@ private val SAMPLE_XML = """
       landName="人狼BBS:G国" formalName="人狼BBS:G"
       landId="wolfg" landPrefix="G"
       graveIconURI="img/grave.png"
+      commitTime="06:00:00+09:00"
       generator="MoltonfTestFixture 1.0"
     >
 
@@ -128,6 +129,19 @@ class ArchiveTest {
         assertEquals("img/grave.png", story.graveIconURI)
         assertEquals(6, story.avatarList.size)
         assertEquals(3, story.periods.size)
+    }
+
+    @Test
+    fun parsesCommitTime() {
+        val story = parseStory(SAMPLE_XML)
+        assertEquals(6 * 3_600_000, story.commitTime)
+        assertEquals(6 * 3_600_000, story.effectiveCommitTime())
+    }
+
+    @Test
+    fun effectiveCommitTimeFallsBackToFirstTalkOfDay1() {
+        val story = parseStory(SAMPLE_XML).copy(commitTime = null)
+        assertEquals(10 * 3_600_000 + 500, story.effectiveCommitTime())
     }
 
     @Test

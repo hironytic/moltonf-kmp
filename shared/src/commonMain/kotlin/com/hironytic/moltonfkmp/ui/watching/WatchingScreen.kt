@@ -31,6 +31,10 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import com.hironytic.moltonfkmp.story.PeriodType
+import com.hironytic.moltonfkmp.story.effectiveCommitTime
+import com.hironytic.moltonfkmp.story.hourPartOf
+import com.hironytic.moltonfkmp.story.minutePartOf
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -99,7 +103,23 @@ fun WatchingScreen(
         topBar = {
             val loaded = uiState as? WatchingUiState.Loaded
             MoltonfTopAppBar(
-                title = { Text(loaded?.workspaceName ?: "", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                title = {
+                    Column {
+                        Text(loaded?.workspaceName ?: "", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        if (loaded != null) {
+                            val subtitle = watchingSubtitle(loaded)
+                            if (subtitle.isNotEmpty()) {
+                                Text(
+                                    subtitle,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(painterResource(Res.drawable.ic_arrow_back), contentDescription = "戻る")
@@ -161,6 +181,21 @@ fun WatchingScreen(
             }
         }
     }
+}
+
+private fun watchingSubtitle(state: WatchingUiState.Loaded): String {
+    val parts = mutableListOf<String>()
+    state.story.effectiveCommitTime()?.let { time ->
+        val hour = hourPartOf(time).toString().padStart(2, '0')
+        val minute = minutePartOf(time).toString().padStart(2, '0')
+        parts.add("$hour:$minute に更新")
+    }
+    // The viewpoint character is revealed at the start of day 1, so hide it while the prologue is the latest day.
+    val isPrologueLatest = state.dayProgress?.let { state.story.periods.getOrNull(it)?.type == PeriodType.PROLOGUE } == true
+    if (!isPrologueLatest) {
+        state.characterMap[state.playerCharacter]?.let { parts.add(it.avatar.fullName) }
+    }
+    return parts.joinToString(" - ")
 }
 
 @Composable
