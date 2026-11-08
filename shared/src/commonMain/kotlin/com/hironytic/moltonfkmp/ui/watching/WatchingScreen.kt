@@ -187,10 +187,10 @@ private fun watchingSubtitle(state: WatchingUiState.Loaded): String {
     state.story.effectiveCommitTime()?.let { time ->
         val hour = hourPartOf(time).toString().padStart(2, '0')
         val minute = minutePartOf(time).toString().padStart(2, '0')
-        parts.add("更新 $hour:$minute")
+        parts.add("$hour:${minute}に更新")
     }
     state.characterMap[state.playerCharacter]?.let { parts.add(it.avatar.fullName) }
-    return parts.joinToString(" ・ ")
+    return parts.joinToString(" - ")
 }
 
 @Composable
