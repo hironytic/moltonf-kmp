@@ -31,6 +31,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import com.hironytic.moltonfkmp.story.PeriodType
 import com.hironytic.moltonfkmp.story.effectiveCommitTime
 import com.hironytic.moltonfkmp.story.hourPartOf
 import com.hironytic.moltonfkmp.story.minutePartOf
@@ -189,7 +190,11 @@ private fun watchingSubtitle(state: WatchingUiState.Loaded): String {
         val minute = minutePartOf(time).toString().padStart(2, '0')
         parts.add("$hour:$minute に更新")
     }
-    state.characterMap[state.playerCharacter]?.let { parts.add(it.avatar.fullName) }
+    // The viewpoint character is revealed at the start of day 1, so hide it while the prologue is the latest day.
+    val isPrologueLatest = state.dayProgress?.let { state.story.periods.getOrNull(it)?.type == PeriodType.PROLOGUE } == true
+    if (!isPrologueLatest) {
+        state.characterMap[state.playerCharacter]?.let { parts.add(it.avatar.fullName) }
+    }
     return parts.joinToString(" - ")
 }
 
