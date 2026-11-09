@@ -283,10 +283,13 @@ private fun TalkTab(
     // On the newest revealed day, the furthest item seen is persisted in the workspace so
     // that "scroll to bottom" never jumps past what the user has seen (spoiler prevention).
     val furthestSeenIndex = state.readPosition
+    // Once the last element of the newest day has been seen, there is nothing left to spoil,
+    // so "scroll to bottom" may go to the very end of the list like on past days.
+    val isLimitedToReadPosition = isNewestDay && state.readPosition < state.elements.lastIndex
     // A pending jump from the bookmark list wins. Otherwise reset to top only when the day
     // actually changes, not merely when this tab re-enters composition — otherwise the
     // scroll position kept in listState would be immediately discarded.
-    LaunchedEffect(state.currentDay, isNewestDay, state.scrollTargetElementId) {
+    LaunchedEffect(state.currentDay, isNewestDay, state.scrollTargetElementId, state.talkFilter.isDefault) {
         val target = state.scrollTargetElementId
         if (target != null) {
             val displayedPos = state.displayedElements.indexOfFirst { it.element.elementId == target }
@@ -302,7 +305,8 @@ private fun TalkTab(
         }
         // Tracking starts only after the reset above so a stale scroll position from the
         // previously shown day is never recorded as read.
-        if (!isNewestDay) return@LaunchedEffect
+        // While filtered, the list ends at the read position, so reaching its end must not mark the day as read.
+        if (!isNewestDay || !state.talkFilter.isDefault) return@LaunchedEffect
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }
             .collect { itemIndex ->
                 // Items past the owners list (e.g. the "next day" button) mean the whole day was seen.
@@ -332,7 +336,7 @@ private fun TalkTab(
     // Whether the list is already scrolled to the position that "scroll to bottom" leads to
     // on the newest day, i.e. the jump would not move anything.
     val isAtReadPosition = isAtReadPosition@{
-        if (!isNewestDay) return@isAtReadPosition false
+        if (!isLimitedToReadPosition) return@isAtReadPosition false
         val displayedPos = lastSeenDisplayedPos()
         if (displayedPos < 0) return@isAtReadPosition false
         val target = displayedItemIndices.getOrNull(displayedPos) ?: return@isAtReadPosition false
@@ -347,13 +351,13 @@ private fun TalkTab(
         val displayedPos = lastSeenDisplayedPos()
         // Read when the button is tapped, not during composition, as it changes on every scroll.
         val lastItemIndex = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
-        val target = if (isNewestDay) {
+        val target = if (isLimitedToReadPosition) {
             displayedItemIndices.getOrNull(displayedPos) ?: lastItemIndex
         } else {
             lastItemIndex
         }
         scope.launch {
-            if (!isNewestDay) {
+            if (!isLimitedToReadPosition) {
                 listState.animateScrollToItem(target)
                 return@launch
             }
@@ -464,7 +468,28 @@ private fun TalkTab(
                         }
                     }
                 }
-                if (state.canMoveToNextDay) {
+                if (state.isUnreadHiddenByFilter) {
+                    item(key = "filter-unread-hidden") {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Text(
+                                "フィルタ適用中は、まだ読んでいない部分は表示されません。続きを読むにはフィルタを解除してください。",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Button(
+                                onClick = viewModel::resetTalkFilter,
+                                modifier = Modifier.padding(top = 12.dp),
+                            ) {
+                                Text("フィルタを解除")
+                            }
+                        }
+                    }
+                }
+                // Moving on while unread talks are hidden by the filter would skip them.
+                if (state.canMoveToNextDay && !state.isUnreadHiddenByFilter) {
                     item {
                         Button(
                             onClick = viewModel::moveToNextDay,

@@ -47,6 +47,11 @@ sealed interface WatchingUiState {
         /** The elements to display after applying [talkFilter], each with its index in [elements]. */
         val displayedElements: List<IndexedElement>,
         val talkFilter: TalkFilter,
+        /**
+         * True while the talk filter hides the unread part of the newest day (to prevent spoilers),
+         * i.e. [displayedElements] stops at the read position although more elements follow.
+         */
+        val isUnreadHiddenByFilter: Boolean,
         val selectedTab: WatchingTab,
         /** Element to scroll to on the talk tab; cleared by [WatchingViewModel.consumeScrollTarget]. */
         val scrollTargetElementId: String?,
@@ -109,6 +114,14 @@ class WatchingViewModel(
         }
         val currentDay = workspace.currentDay
         val elements = currentElements(currentStory, characterMap, workspace.playerCharacter, dayProgress, currentDay)
+        // Filtering shrinks the list, so showing the unread part of the newest day could let the user
+        // skip over hidden talks and see what comes later. Only the read part is shown then.
+        val isNewestDay = dayProgress != null && currentDay >= dayProgress
+        val isUnreadHiddenByFilter = isNewestDay && !talkFilter.isDefault && workspace.readPosition < elements.lastIndex
+        var displayedElements = applyTalkFilter(elements, talkFilter)
+        if (isNewestDay && !talkFilter.isDefault) {
+            displayedElements = displayedElements.filter { it.index <= workspace.readPosition }
+        }
         _uiState.value = WatchingUiState.Loaded(
             workspaceName = workspace.name,
             story = currentStory,
@@ -121,8 +134,9 @@ class WatchingViewModel(
             currentDay = currentDay,
             canMoveToNextDay = currentDay < currentStory.periods.size - 1,
             elements = elements,
-            displayedElements = applyTalkFilter(elements, talkFilter),
+            displayedElements = displayedElements,
             talkFilter = talkFilter,
+            isUnreadHiddenByFilter = isUnreadHiddenByFilter,
             selectedTab = selectedTab,
             scrollTargetElementId = scrollTargetElementId,
             scrollTargetBookmarkId = scrollTargetBookmarkId,
@@ -265,6 +279,8 @@ class WatchingViewModel(
         val hidden = it.hiddenTalkTypes
         it.copy(hiddenTalkTypes = if (talkType in hidden) hidden - talkType else hidden + talkType)
     }
+
+    fun resetTalkFilter() = updateTalkFilter { TalkFilter() }
 
     fun checkAllAvatars() = updateTalkFilter { it.copy(hiddenAvatarIds = emptySet()) }
 
