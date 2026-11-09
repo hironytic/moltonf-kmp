@@ -283,6 +283,9 @@ private fun TalkTab(
     // On the newest revealed day, the furthest item seen is persisted in the workspace so
     // that "scroll to bottom" never jumps past what the user has seen (spoiler prevention).
     val furthestSeenIndex = state.readPosition
+    // Once the last element of the newest day has been seen, there is nothing left to spoil,
+    // so "scroll to bottom" may go to the very end of the list like on past days.
+    val isLimitedToReadPosition = isNewestDay && state.readPosition < state.elements.lastIndex
     // A pending jump from the bookmark list wins. Otherwise reset to top only when the day
     // actually changes, not merely when this tab re-enters composition — otherwise the
     // scroll position kept in listState would be immediately discarded.
@@ -333,7 +336,7 @@ private fun TalkTab(
     // Whether the list is already scrolled to the position that "scroll to bottom" leads to
     // on the newest day, i.e. the jump would not move anything.
     val isAtReadPosition = isAtReadPosition@{
-        if (!isNewestDay) return@isAtReadPosition false
+        if (!isLimitedToReadPosition) return@isAtReadPosition false
         val displayedPos = lastSeenDisplayedPos()
         if (displayedPos < 0) return@isAtReadPosition false
         val target = displayedItemIndices.getOrNull(displayedPos) ?: return@isAtReadPosition false
@@ -348,13 +351,13 @@ private fun TalkTab(
         val displayedPos = lastSeenDisplayedPos()
         // Read when the button is tapped, not during composition, as it changes on every scroll.
         val lastItemIndex = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
-        val target = if (isNewestDay) {
+        val target = if (isLimitedToReadPosition) {
             displayedItemIndices.getOrNull(displayedPos) ?: lastItemIndex
         } else {
             lastItemIndex
         }
         scope.launch {
-            if (!isNewestDay) {
+            if (!isLimitedToReadPosition) {
                 listState.animateScrollToItem(target)
                 return@launch
             }
@@ -485,8 +488,8 @@ private fun TalkTab(
                         }
                     }
                 }
-                // Moving on while filtered could skip unread talks hidden by the filter.
-                if (state.canMoveToNextDay && state.talkFilter.isDefault) {
+                // Moving on while unread talks are hidden by the filter would skip them.
+                if (state.canMoveToNextDay && !state.isUnreadHiddenByFilter) {
                     item {
                         Button(
                             onClick = viewModel::moveToNextDay,
