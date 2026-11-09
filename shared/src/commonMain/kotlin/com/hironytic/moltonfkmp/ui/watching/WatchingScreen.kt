@@ -526,6 +526,8 @@ private fun TalkTab(
                     filter = state.talkFilter,
                     onToggleAvatar = viewModel::toggleAvatarFilter,
                     onToggleTalkType = viewModel::toggleTalkTypeFilter,
+                    onShowOnlyAvatar = viewModel::showOnlyAvatar,
+                    onShowOnlyTalkType = viewModel::showOnlyTalkType,
                     onCheckAllAvatars = viewModel::checkAllAvatars,
                     onUncheckAllAvatars = viewModel::uncheckAllAvatars,
                     modifier = Modifier.verticalScroll(rememberScrollState()),
