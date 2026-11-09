@@ -49,6 +49,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -261,12 +262,16 @@ private fun TalkTab(
     val itemOwners = mutableListOf<Int>()
     // The list item index of each displayed element's row (parallel to state.displayedElements).
     val displayedItemIndices = mutableListOf<Int>()
+    // The list item index of each expanded thread entry's row, by entry id.
+    val threadEntryItemIndices = mutableMapOf<String, Int>()
     state.displayedElements.forEach { (index, element) ->
         displayedItemIndices += itemOwners.size
         itemOwners += index
-        val threadSize = expandedThreads[threadKey(state.currentDay, element.elementId)]
-            ?.flattenDescendants()?.size ?: 0
-        repeat(threadSize) { itemOwners += index }
+        expandedThreads[threadKey(state.currentDay, element.elementId)]
+            ?.flattenDescendants()?.forEach { flat ->
+                threadEntryItemIndices[flat.entry.id] = itemOwners.size
+                itemOwners += index
+            }
     }
     var bookmarkTarget by remember { mutableStateOf<Talk?>(null) }
     var highlightedElementId by remember { mutableStateOf<String?>(null) }
@@ -346,6 +351,31 @@ private fun TalkTab(
         item.offset + revealPxOf(displayedPos) - viewportEnd <= 0
     }
     val currentIsAtReadPosition by rememberUpdatedState(isAtReadPosition)
+
+    // Scroll so that the top of the newly shown linked talk is visible, with the same visible
+    // height as "scroll to bottom" uses. Only ever scrolls forward.
+    val threadScrollTarget by viewModel.threadScrollTarget.collectAsState()
+    LaunchedEffect(threadScrollTarget) {
+        val targetId = threadScrollTarget ?: return@LaunchedEffect
+        // Let the list lay out the inserted rows first.
+        withFrameNanos { }
+        val target = threadEntryItemIndices[targetId]
+        if (target != null) {
+            val revealPx = with(density) { MIN_TALK_ROW_HEIGHT.toPx().toInt() }
+            val info = listState.layoutInfo
+            val viewportEnd = info.viewportEndOffset - info.afterContentPadding
+            val item = info.visibleItemsInfo.firstOrNull { it.index == target }
+            if (item != null) {
+                val cutOff = item.offset + revealPx - viewportEnd
+                if (cutOff > 0) listState.animateScrollBy(cutOff.toFloat())
+            } else if (target > (info.visibleItemsInfo.lastOrNull()?.index ?: 0)) {
+                val viewportHeight = viewportEnd - info.viewportStartOffset - info.beforeContentPadding
+                listState.animateScrollToItem(target, (revealPx - viewportHeight).coerceAtMost(0))
+            }
+        }
+        // Consumed last: clearing the key restarts (and so cancels) this effect.
+        viewModel.consumeThreadScrollTarget()
+    }
 
     val scrollToBottom: () -> Job = {
         val displayedPos = lastSeenDisplayedPos()
