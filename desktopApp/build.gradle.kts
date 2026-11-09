@@ -27,6 +27,7 @@ compose.desktop {
             val iconDir = project.layout.projectDirectory.dir("src/main/icons")
             linux { iconFile.set(iconDir.file("icon.png")) }
             windows { iconFile.set(iconDir.file("icon.ico")) }
+            macOS { iconFile.set(iconDir.file("icon.icns")) }
         }
     }
 }
