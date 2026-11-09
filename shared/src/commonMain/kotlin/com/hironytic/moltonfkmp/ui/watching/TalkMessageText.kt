@@ -17,10 +17,15 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.dp
+import kotlin.math.sqrt
 import com.hironytic.moltonfkmp.ui.theme.MessageHighlightColors
 import com.hironytic.moltonfkmp.ui.theme.MoltonfColors
 
 private const val LINK_ANNOTATION_TAG = "link"
+
+/** How far from a link a tap still counts as hitting it. */
+private val LINK_TAP_SLOP = 12.dp
 
 /**
  * Renders [lines] (one [MessageSegment] list per source line, joined with line breaks),
@@ -84,10 +89,24 @@ fun TalkMessageText(
         modifier = modifier.pointerInput(lines) {
             detectTapGestures { offset: Offset ->
                 val result = layoutResult ?: return@detectTapGestures
-                val position = result.getOffsetForPosition(offset)
-                annotatedString.getStringAnnotations(LINK_ANNOTATION_TAG, position, position)
-                    .firstOrNull()
-                    ?.let { annotation -> linkMap[annotation.item]?.let { onLinkClick(annotation.item, it) } }
+                // Links are small for a finger, so accept taps near a link, picking the closest one.
+                val slop = LINK_TAP_SLOP.toPx()
+                var bestKey: String? = null
+                var bestDistance = Float.MAX_VALUE
+                for (annotation in annotatedString.getStringAnnotations(LINK_ANNOTATION_TAG, 0, annotatedString.length)) {
+                    for (i in annotation.start until annotation.end) {
+                        val box = result.getBoundingBox(i)
+                        val dx = maxOf(box.left - offset.x, 0f, offset.x - box.right)
+                        val dy = maxOf(box.top - offset.y, 0f, offset.y - box.bottom)
+                        val distance = sqrt(dx * dx + dy * dy)
+                        if (distance <= slop && distance < bestDistance) {
+                            bestDistance = distance
+                            bestKey = annotation.item
+                        }
+                    }
+                }
+                val key = bestKey ?: return@detectTapGestures
+                linkMap[key]?.let { onLinkClick(key, it) }
             }
         },
     )

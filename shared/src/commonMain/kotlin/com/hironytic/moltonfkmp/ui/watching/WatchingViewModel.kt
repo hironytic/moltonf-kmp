@@ -88,6 +88,17 @@ class WatchingViewModel(
     private val _expandedThreads = MutableStateFlow<Map<String, TalkThreadEntry>>(emptyMap())
     val expandedThreads: StateFlow<Map<String, TalkThreadEntry>> = _expandedThreads.asStateFlow()
 
+    /**
+     * One-shot: the id of the first thread entry inserted by the latest link expansion, which the
+     * talk tab scrolls into view and then clears with [consumeThreadScrollTarget].
+     */
+    private val _threadScrollTarget = MutableStateFlow<String?>(null)
+    val threadScrollTarget: StateFlow<String?> = _threadScrollTarget.asStateFlow()
+
+    fun consumeThreadScrollTarget() {
+        _threadScrollTarget.value = null
+    }
+
     init {
         viewModelScope.launch {
             val loadedWorkspace = workspaceStore.getWorkspace(workspaceId) ?: return@launch
@@ -297,7 +308,11 @@ class WatchingViewModel(
     fun toggleLink(day: Int, talk: Talk, path: List<String>, linkKey: String, targets: List<TalkWithDay>) {
         val key = threadKey(day, talk.elementId)
         val root = _expandedThreads.value[key] ?: TalkThreadEntry(nextId(), day, talk)
-        _expandedThreads.value = _expandedThreads.value + (key to root.toggleLink(path, linkKey, targets, ::nextId))
+        val oldIds = _expandedThreads.value[key]?.flattenDescendants()?.map { it.entry.id }?.toSet() ?: emptySet()
+        val newRoot = root.toggleLink(path, linkKey, targets, ::nextId)
+        _expandedThreads.value = _expandedThreads.value + (key to newRoot)
+        // Only an expansion adds entries; a collapse leaves no target.
+        _threadScrollTarget.value = newRoot.flattenDescendants().firstOrNull { it.entry.id !in oldIds }?.entry?.id
     }
 }
 
