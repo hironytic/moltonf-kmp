@@ -23,6 +23,10 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.hironytic.moltonfkmp"
             packageVersion = "1.0.0"
+
+            val iconDir = project.layout.projectDirectory.dir("src/main/icons")
+            linux { iconFile.set(iconDir.file("icon.png")) }
+            windows { iconFile.set(iconDir.file("icon.ico")) }
         }
     }
 }
