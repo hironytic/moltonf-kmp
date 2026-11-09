@@ -280,6 +280,17 @@ class WatchingViewModel(
         it.copy(hiddenTalkTypes = if (talkType in hidden) hidden - talkType else hidden + talkType)
     }
 
+    /** Shows only [avatarId] among the characters. */
+    fun showOnlyAvatar(avatarId: String) = updateTalkFilter { filter ->
+        val allIds = story?.avatarList?.map { it.avatarId }.orEmpty()
+        filter.copy(hiddenAvatarIds = allIds.filter { it != avatarId }.toSet())
+    }
+
+    /** Shows only [talkType] among the talk types. */
+    fun showOnlyTalkType(talkType: TalkType) = updateTalkFilter { filter ->
+        filter.copy(hiddenTalkTypes = TalkType.entries.filter { it != talkType }.toSet())
+    }
+
     fun resetTalkFilter() = updateTalkFilter { TalkFilter() }
 
     fun checkAllAvatars() = updateTalkFilter { it.copy(hiddenAvatarIds = emptySet()) }

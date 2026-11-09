@@ -12,6 +12,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -40,10 +44,16 @@ fun TalkFilterPanel(
     filter: TalkFilter,
     onToggleAvatar: (String) -> Unit,
     onToggleTalkType: (TalkType) -> Unit,
+    onShowOnlyAvatar: (String) -> Unit,
+    onShowOnlyTalkType: (TalkType) -> Unit,
     onCheckAllAvatars: () -> Unit,
     onUncheckAllAvatars: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // If everything is checked when the panel opens, the first tap on an item
+    // leaves only that item checked instead of unchecking it.
+    var soloAvatarPending by remember { mutableStateOf(filter.hiddenAvatarIds.isEmpty()) }
+    var soloTalkTypePending by remember { mutableStateOf(filter.hiddenTalkTypes.isEmpty()) }
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)) {
         Row(
             modifier = Modifier.padding(bottom = 8.dp),
@@ -58,7 +68,10 @@ fun TalkFilterPanel(
             avatars.forEach { avatar ->
                 MoltonfFilterChip(
                     selected = avatar.avatarId !in filter.hiddenAvatarIds,
-                    onClick = { onToggleAvatar(avatar.avatarId) },
+                    onClick = {
+                        if (soloAvatarPending) onShowOnlyAvatar(avatar.avatarId) else onToggleAvatar(avatar.avatarId)
+                        soloAvatarPending = false
+                    },
                     label = avatar.shortName,
                 )
             }
@@ -68,7 +81,10 @@ fun TalkFilterPanel(
             filterableTalkTypes.forEach { (type, label) ->
                 MoltonfFilterChip(
                     selected = type !in filter.hiddenTalkTypes,
-                    onClick = { onToggleTalkType(type) },
+                    onClick = {
+                        if (soloTalkTypePending) onShowOnlyTalkType(type) else onToggleTalkType(type)
+                        soloTalkTypePending = false
+                    },
                     label = label,
                 )
             }
