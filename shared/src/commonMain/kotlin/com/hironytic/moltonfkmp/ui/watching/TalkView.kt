@@ -82,6 +82,11 @@ fun TalkView(
                 Spacer(Modifier.width(4.dp))
             }
             Text(avatar?.fullName ?: talk.xname, color = MoltonfColors.avatarName, style = MaterialTheme.typography.labelMedium)
+            val speechCount = talkMap.getSpeechCount(day, talk.elementId)
+            if (speechCount != null) {
+                Spacer(Modifier.width(4.dp))
+                Text("($speechCount)", color = MoltonfColors.talkTime, style = MaterialTheme.typography.labelSmall)
+            }
             Spacer(Modifier.width(4.dp))
             Text(timeString(day, talk.time), color = MoltonfColors.talkTime, style = MaterialTheme.typography.labelSmall)
             if (onBookmarkClick != null) {

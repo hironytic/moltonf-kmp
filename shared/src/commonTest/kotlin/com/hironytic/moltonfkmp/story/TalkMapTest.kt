@@ -84,6 +84,29 @@ class TalkMapTest {
     }
 
     @Test
+    fun getSpeechCount_countsPerDayAndPerTalkType() {
+        val p1 = talk("p1", talkNo = 1, time = 0)
+        val w1 = talk("w1", talkNo = 2, time = 1).copy(talkType = TalkType.WOLF)
+        val p2 = talk("p2", talkNo = 3, time = 2)
+        val w2 = talk("w2", talkNo = 4, time = 3).copy(talkType = TalkType.WOLF)
+        val nextDay = talk("p3", talkNo = 5, time = 0)
+
+        val talkMap = createTalkMap(
+            story(
+                Period(PeriodType.PROGRESS, day = 1, elements = listOf(p1, w1, p2, w2)),
+                Period(PeriodType.PROGRESS, day = 2, elements = listOf(nextDay)),
+            )
+        )
+
+        assertEquals(1, talkMap.getSpeechCount(1, "p1"))
+        assertEquals(2, talkMap.getSpeechCount(1, "p2"))
+        assertEquals(1, talkMap.getSpeechCount(1, "w1"))
+        assertEquals(2, talkMap.getSpeechCount(1, "w2"))
+        assertEquals(1, talkMap.getSpeechCount(2, "p3"))
+        assertNull(talkMap.getSpeechCount(1, "unknown"))
+    }
+
+    @Test
     fun nullTalkMap_returnsNothing() {
         val talkMap = nullTalkMap()
         assertNull(talkMap.getTalkByTalkNo(1))
