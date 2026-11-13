@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,6 +38,8 @@ import com.hironytic.moltonfkmp.story.hourPartOf
 import com.hironytic.moltonfkmp.story.minutePartOf
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import com.hironytic.moltonfkmp.workspace.Bookmark
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -273,7 +276,17 @@ private fun TalkTab(
                 itemOwners += index
             }
     }
-    var bookmarkTarget by remember { mutableStateOf<Talk?>(null) }
+    // Talk being bookmarked (day, elementId) and existing bookmark whose action is being chosen / comment edited.
+    var bookmarkTarget by remember { mutableStateOf<Pair<Int, String>?>(null) }
+    var bookmarkMenuTarget by remember { mutableStateOf<Bookmark?>(null) }
+    var bookmarkEditTarget by remember { mutableStateOf<Bookmark?>(null) }
+    val onStarClick = { day: Int, elementId: String ->
+        val existing = state.bookmarkItems.firstOrNull {
+            it.bookmark.day == day && it.bookmark.elementId == elementId
+        }
+        // A bookmarked talk's star lets the user choose between editing and viewing; otherwise add a new one.
+        if (existing != null) bookmarkMenuTarget = existing.bookmark else bookmarkTarget = day to elementId
+    }
     var highlightedElementId by remember { mutableStateOf<String?>(null) }
     // Separate from the scroll effect, which restarts once the scroll target is consumed.
     LaunchedEffect(highlightedElementId) {
@@ -464,13 +477,7 @@ private fun TalkTab(
                                 viewModel.toggleLink(state.currentDay, talk, emptyList(), linkKey, targets)
                             },
                             bookmarkedElementIds = state.bookmarkedElementIds,
-                            onBookmarkClick = { talk ->
-                                // A bookmarked talk's star shows its bookmark in the list; otherwise add a new one.
-                                val existing = state.bookmarkItems.firstOrNull {
-                                    it.bookmark.day == state.currentDay && it.bookmark.elementId == talk.elementId
-                                }
-                                if (existing != null) viewModel.showBookmark(existing.bookmark.id) else bookmarkTarget = talk
-                            },
+                            onBookmarkClick = { talk -> onStarClick(state.currentDay, talk.elementId) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(highlightFlashColor(element.elementId == highlightedElementId))
@@ -490,6 +497,10 @@ private fun TalkTab(
                                 onLinkClick = { linkKey, targets ->
                                     viewModel.toggleLink(state.currentDay, thread.talk, flat.path, linkKey, targets)
                                 },
+                                isBookmarked = state.bookmarkItems.any {
+                                    it.bookmark.day == flat.entry.day && it.bookmark.elementId == flat.entry.talk.elementId
+                                },
+                                onBookmarkClick = { onStarClick(flat.entry.day, flat.entry.talk.elementId) },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .background(MoltonfColors.linkedTalkBackground)
@@ -566,16 +577,48 @@ private fun TalkTab(
         }
     }
 
-    bookmarkTarget?.let { talk ->
-        val day = state.currentDay
+    bookmarkTarget?.let { (day, elementId) ->
         BookmarkEditDialog(
             initialComment = "",
             isExisting = false,
             onSave = {
-                viewModel.saveBookmark(day, talk.elementId, it)
+                viewModel.saveBookmark(day, elementId, it)
                 bookmarkTarget = null
             },
             onDismiss = { bookmarkTarget = null },
+        )
+    }
+    bookmarkMenuTarget?.let { bookmark ->
+        AlertDialog(
+            onDismissRequest = { bookmarkMenuTarget = null },
+            title = { Text("ブックマーク") },
+            text = {
+                Column {
+                    TextButton(onClick = {
+                        bookmarkMenuTarget = null
+                        bookmarkEditTarget = bookmark
+                    }) { Text("コメントを編集") }
+                    TextButton(onClick = {
+                        bookmarkMenuTarget = null
+                        viewModel.showBookmark(bookmark.id)
+                    }) { Text("ブックマークを見る") }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { bookmarkMenuTarget = null }) { Text("キャンセル") }
+            },
+        )
+    }
+    bookmarkEditTarget?.let { bookmark ->
+        BookmarkEditDialog(
+            initialComment = bookmark.comment,
+            isExisting = true,
+            onSave = {
+                viewModel.saveBookmark(bookmark.day, bookmark.elementId, it)
+                bookmarkEditTarget = null
+            },
+            onDismiss = { bookmarkEditTarget = null },
         )
     }
 }
