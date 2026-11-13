@@ -45,6 +45,25 @@ fun TalkThreadEntry.toggleLink(
     return copy(expandedLinks = newExpandedLinks)
 }
 
+/**
+ * Removes the entry reached by descending the non-empty [path] from this (root) entry, together
+ * with everything nested under it. A link left with no entries is dropped as well, so that tapping
+ * it again expands it instead of collapsing an empty group.
+ */
+fun TalkThreadEntry.removeEntry(path: List<String>): TalkThreadEntry {
+    if (path.isEmpty()) return this
+    val childId = path.first()
+    val restOfPath = path.drop(1)
+    val newExpandedLinks = expandedLinks.mapValues { (_, children) ->
+        if (restOfPath.isEmpty()) {
+            children.filter { it.id != childId }
+        } else {
+            children.map { child -> if (child.id == childId) child.removeEntry(restOfPath) else child }
+        }
+    }.filterValues { it.isNotEmpty() }
+    return copy(expandedLinks = newExpandedLinks)
+}
+
 /** An entry paired with its indentation [depth] and the [path] to reach it from the root. */
 data class FlatTalkThreadEntry(
     val entry: TalkThreadEntry,

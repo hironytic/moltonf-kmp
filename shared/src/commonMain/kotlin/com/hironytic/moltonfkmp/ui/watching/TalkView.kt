@@ -66,6 +66,7 @@ fun TalkView(
     modifier: Modifier = Modifier,
     isBookmarked: Boolean = false,
     onBookmarkClick: (() -> Unit)? = null,
+    onIconClick: (() -> Unit)? = null,
 ) {
     val avatar = characterMap[talk.avatarId]?.avatar
     val faceIcon = if (talk.talkType == TalkType.GRAVE) {
@@ -98,7 +99,10 @@ fun TalkView(
             FaceIconImage(
                 icon = faceIcon,
                 contentDescription = avatar?.shortName,
-                modifier = Modifier.size(40.dp).clip(CircleShape),
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .then(if (onIconClick != null) Modifier.clickable(onClick = onIconClick) else Modifier),
             )
             Spacer(Modifier.width(8.dp))
             TalkMessageText(

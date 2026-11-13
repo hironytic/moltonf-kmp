@@ -134,6 +134,35 @@ class TalkThreadTest {
     }
 
     @Test
+    fun removeEntry_removesOnlyThatEntryAndItsDescendants() {
+        val source = talk("source")
+        val t1 = talk("t1")
+        val t2 = talk("t2")
+        val grandchild = talk("grandchild")
+        val ids = SequentialIds()
+        val root = createTalkThreadRoot("root", 1, source, "L1", listOf(TalkWithDay(1, t1), TalkWithDay(1, t2)), ids::nextId)
+        val t1Id = root.expandedLinks.getValue("L1")[0].id
+        val expanded = root.toggleLink(listOf(t1Id), "L2", listOf(TalkWithDay(1, grandchild)), ids::nextId)
+
+        val removed = expanded.removeEntry(listOf(t1Id))
+
+        assertEquals(listOf(source.elementId, t2.elementId), removed.flatten().map { it.entry.talk.elementId })
+    }
+
+    @Test
+    fun removeEntry_dropsTheLinkWhenItsLastEntryIsRemoved() {
+        val source = talk("source")
+        val target = talk("target")
+        val ids = SequentialIds()
+        val root = createTalkThreadRoot("root", 1, source, "L1", listOf(TalkWithDay(1, target)), ids::nextId)
+        val targetId = root.expandedLinks.getValue("L1").single().id
+
+        val removed = root.removeEntry(listOf(targetId))
+
+        assertTrue(removed.expandedLinks.isEmpty())
+    }
+
+    @Test
     fun multipleTargetsForOneLink_areAllInsertedInOrder() {
         val source = talk("source")
         val t1 = talk("t1")

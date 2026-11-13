@@ -490,6 +490,9 @@ private fun TalkTab(
                                 onLinkClick = { linkKey, targets ->
                                     viewModel.toggleLink(state.currentDay, thread.talk, flat.path, linkKey, targets)
                                 },
+                                onIconClick = {
+                                    viewModel.closeThreadEntry(state.currentDay, thread.talk, flat.path)
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .background(MoltonfColors.linkedTalkBackground)

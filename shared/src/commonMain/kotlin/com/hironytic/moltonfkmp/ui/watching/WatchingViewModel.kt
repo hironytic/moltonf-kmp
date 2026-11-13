@@ -325,6 +325,13 @@ class WatchingViewModel(
         // Only an expansion adds entries; a collapse leaves no target.
         _threadScrollTarget.value = newRoot.flattenDescendants().firstOrNull { it.entry.id !in oldIds }?.entry?.id
     }
+
+    /** Closes the expanded entry reached by the non-empty [path] below the top-level [talk] of [day]. */
+    fun closeThreadEntry(day: Int, talk: Talk, path: List<String>) {
+        val key = threadKey(day, talk.elementId)
+        val root = _expandedThreads.value[key] ?: return
+        _expandedThreads.value = _expandedThreads.value + (key to root.removeEntry(path))
+    }
 }
 
 fun threadKey(day: Int, elementId: String): String = "$day/$elementId"
